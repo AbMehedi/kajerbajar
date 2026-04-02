@@ -1,0 +1,21 @@
+{
+  // ── CSS Language Server: suppress false @tailwind lint errors ──
+  // The VS Code built-in CSS validator doesn't know Tailwind's custom
+  // @tailwind, @layer, @apply directives, so it flags them as errors.
+  // Setting this to false fixes those phantom red underlines.
+  "css.validate": false,
+
+  // ── Editor: enforce consistent style across all team members ──
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+
+  // ── Tailwind CSS IntelliSense extension settings ──
+  // Gives autocomplete for Tailwind class names inside className=""
+  "tailwindCSS.experimental.classRegex": [
+    ["cn\\(([^)]*)\\)", "'([^']*)'"],
+    ["className\\s*=\\s*[\"']([^\"']*)[\"']", "([^\"']*)"]
+  ]
+}
+

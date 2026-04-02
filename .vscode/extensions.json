@@ -1,0 +1,10 @@
+{
+  // Recommended VS Code extensions for KaajerBazar team.
+  // VS Code will show "Install Recommended Extensions?" when you open this project.
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",   // Tailwind IntelliSense — autocomplete for className
+    "esbenp.prettier-vscode",       // Prettier — auto-format on save
+    "dbaeumer.vscode-eslint",       // ESLint — catch JS errors in the editor
+    "mtxr.sqltools"                 // SQL tools — useful for reading schema.sql
+  ]
+}

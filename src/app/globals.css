@@ -1,94 +1,192 @@
+/*
+ * globals.css
+ * ============================================================
+ * PURPOSE:
+ *   This is the ONE global stylesheet for the entire app.
+ *   It is imported once in src/app/layout.js and applies to
+ *   every page automatically.
+ *
+ * HOW IT WORKS:
+ *   1. @tailwind directives inject Tailwind's reset, component
+ *      classes, and utility classes (bg-*, text-*, flex, etc.)
+ *   2. @layer base → CSS custom properties (design tokens).
+ *      Change a token here and it updates everywhere at once.
+ *   3. @layer utilities → small helper classes used in JSX.
+ *
+ * DESIGN TOKENS (the --kb-* variables):
+ *   We use our own --kb-* prefix so teammates can instantly
+ *   tell "this variable is ours, not Tailwind's default".
+ *   Change colours here → entire app updates.
+ *
+ * XP RULE: Shared styles live HERE. Never write <style> tags
+ *   inside page or component files — that makes refactoring painful.
+ * ============================================================
+ */
+
+/* ── 1. Tailwind layers (do not reorder) ── */
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* ── 2. Design Tokens — KaajerBazar Brand ── */
+@layer base {
+
+  /*
+   * :root  = light mode defaults (used if you ever add a light theme)
+   * .dark  = dark mode values   (the app uses dark mode by default)
+   *
+   * HOW TO CHANGE A COLOUR:
+   *   Find the --kb-brand-* variable below, update the value,
+   *   and it ripples across every component that uses it.
+   */
+  :root {
+    /* Brand purple — primary interactive colour */
+    --kb-brand-500:      267 84% 61%;   /* hsl format for Tailwind extend */
+    --kb-brand-600:      267 84% 51%;
+    --kb-brand-700:      267 84% 41%;
+
+    /* Neutral surface layers (dark by default) */
+    --kb-surface-900:    222 47% 6%;    /* deepest background */
+    --kb-surface-800:    222 47% 10%;   /* cards / panels */
+    --kb-surface-700:    222 47% 15%;   /* hover states */
+
+    /* Text */
+    --kb-text-primary:   0 0% 97%;
+    --kb-text-secondary: 215 20% 65%;
+    --kb-text-muted:     215 20% 45%;
+
+    /* Status colours */
+    --kb-success:        142 71% 45%;
+    --kb-warning:        38 92% 50%;
+    --kb-error:          0 84% 60%;
+
+    /* Border */
+    --kb-border:         215 20% 20%;   /* subtle white/10 equivalent */
+
+    /* Border-radius scale */
+    --kb-radius-sm:      0.375rem;      /* rounded-md */
+    --kb-radius-md:      0.625rem;      /* rounded-lg */
+    --kb-radius-lg:      1rem;          /* rounded-xl */
+    --kb-radius-xl:      1.5rem;        /* rounded-2xl */
+
+    /* Tailwind CSS-variable bridge (used by shadcn if you add components) */
+    --background:        222 47% 6%;
+    --foreground:        0 0% 97%;
+    --border:            215 20% 20%;
+    --ring:              267 84% 61%;
+    --radius:            0.625rem;
+  }
+
+  /* ── Base element resets ── */
+  * {
+    box-sizing: border-box;
+    border-color: hsl(var(--kb-border));
+  }
+
+  html {
+    /* Apply Inter or Geist Sans set in layout.js via --font-sans variable */
+    font-family: var(--font-sans, system-ui, sans-serif);
+    /* Smooth scrolling for anchor nav */
+    scroll-behavior: smooth;
+    /* Prevent layout shift from scrollbar appearing */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    /* Default background = deepest dark surface */
+    background-color: hsl(var(--kb-surface-900));
+    color: hsl(var(--kb-text-primary));
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+    /* Improve font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Remove default list styles when inside components */
+  ul, ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Make images behave */
+  img, video {
+    max-width: 100%;
+    display: block;
+  }
+
+  /* Accessible focus rings — only visible on keyboard nav */
+  :focus-visible {
+    outline: 2px solid hsl(var(--kb-brand-500));
+    outline-offset: 2px;
+    border-radius: var(--kb-radius-sm);
   }
 }
 
-@layer base {
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
+/* ── 3. Reusable Layout Utilities ── */
+@layer utilities {
+  /* Readable line lengths */
+  .text-balance {
+    text-wrap: balance;
   }
-  :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+
+  /*
+   * .glass — glassmorphism card effect used on auth pages and dashboards.
+   * Usage: <div className="glass"> content </div>
+   */
+  .glass {
+    background-color: rgb(255 255 255 / 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(255 255 255 / 0.1);
   }
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+
+  /*
+   * .gradient-brand — the signature purple-to-deep-blue page background.
+   * Usage: <div className="gradient-brand min-h-screen">
+   */
+  .gradient-brand {
+    background: linear-gradient(
+      135deg,
+      hsl(222 47% 6%) 0%,
+      hsl(267 40% 12%) 50%,
+      hsl(222 47% 6%) 100%
+    );
   }
-  * {
-    @apply border-border outline-ring/50;
+
+  /*
+   * Status badge variants — used for project status, verification status etc.
+   * Usage: <span className="badge-success">Approved</span>
+   */
+  .badge-success {
+    background-color: hsl(var(--kb-success) / 0.15);
+    color: hsl(var(--kb-success));
+    border: 1px solid hsl(var(--kb-success) / 0.3);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--kb-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .badge-warning {
+    background-color: hsl(var(--kb-warning) / 0.15);
+    color: hsl(var(--kb-warning));
+    border: 1px solid hsl(var(--kb-warning) / 0.3);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--kb-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
   }
-  html {
-    @apply font-sans;
+
+  .badge-error {
+    background-color: hsl(var(--kb-error) / 0.15);
+    color: hsl(var(--kb-error));
+    border: 1px solid hsl(var(--kb-error) / 0.3);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--kb-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 }

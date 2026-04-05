@@ -32,7 +32,15 @@ CREATE TABLE company_profiles (
   website TEXT,
   industry TEXT,
   description TEXT,
-  verified BOOLEAN DEFAULT FALSE
+  verified BOOLEAN DEFAULT FALSE,
+  -- Story 1.2: Trade license verification fields
+  trade_license_url TEXT,
+  verification_status TEXT DEFAULT 'not_submitted' 
+    CHECK (verification_status IN ('not_submitted', 'pending', 'verified', 'rejected')),
+  verification_feedback TEXT,
+  verified_at TIMESTAMPTZ,
+  verified_by UUID REFERENCES users_profiles(id),
+  license_uploaded_at TIMESTAMPTZ
 );
 
 -- 4. skill_verifications
@@ -106,3 +114,43 @@ BEGIN
   WHERE id = student_id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- STORY 1.2: Company Trade License Verification
+-- Run the ALTER statements below if you already have company_profiles
+-- ═══════════════════════════════════════════════════════════════════
+
+-- If starting fresh, these columns are added to company_profiles above.
+-- If updating existing DB, run these ALTER statements:
+
+/*
+-- Add verification columns to existing company_profiles table:
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS trade_license_url TEXT;
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS verification_status TEXT 
+DEFAULT 'not_submitted' 
+CHECK (verification_status IN ('not_submitted', 'pending', 'verified', 'rejected'));
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS verification_feedback TEXT;
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS verified_by UUID REFERENCES users_profiles(id);
+
+ALTER TABLE company_profiles 
+ADD COLUMN IF NOT EXISTS license_uploaded_at TIMESTAMPTZ;
+*/
+
+-- Helper function to get pending companies count
+CREATE OR REPLACE FUNCTION get_pending_companies_count()
+RETURNS INTEGER AS $$
+  SELECT COUNT(*)::INTEGER 
+  FROM company_profiles 
+  WHERE verification_status = 'pending';
+$$ LANGUAGE SQL STABLE;

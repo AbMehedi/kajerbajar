@@ -1,20 +1,21 @@
 // src/app/admin/dashboard/page.jsx
-// Member C owns this file.
+// Story 1.2: Admin dashboard with company verification queue
 // Uses .gradient-brand and .glass from globals.css
 
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import CompanyVerificationQueue from './CompanyVerificationQueue'
 
 export const metadata = {
-  title: 'Admin Dashboard',   // layout.js template adds "| KaajerBazar"
+  title: 'Admin Dashboard',
 }
 
-// Colour classes for stat cards — keyed by intent, not by raw colour name.
-// To change "students = purple" → change the value here, nowhere else.
+// Colour classes for stat cards
 const STAT_COLORS = {
   students:     'border-purple-500/30 text-purple-300',
   companies:    'border-blue-500/30   text-blue-300',
   pending:      'border-yellow-500/30 text-yellow-300',
+  pendingCompanies: 'border-orange-500/30 text-orange-300',
 }
 
 export default async function AdminDashboard() {
@@ -31,15 +32,30 @@ export default async function AdminDashboard() {
 
   if (profile?.role !== 'admin') redirect('/unauthorized')
 
-  // Fetch all stats in parallel — one round-trip to the DB
+  // Fetch all stats in parallel
   const [
     { count: studentCount },
     { count: companyCount },
     { count: pendingVerifCount },
+    { count: pendingCompanyCount },
+    { data: pendingCompanies },
   ] = await Promise.all([
-    supabase.from('student_profiles')   .select('*', { count: 'exact', head: true }),
-    supabase.from('company_profiles')   .select('*', { count: 'exact', head: true }),
+    supabase.from('student_profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('company_profiles').select('*', { count: 'exact', head: true }),
     supabase.from('skill_verifications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('company_profiles').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
+    // Fetch pending companies for the queue
+    supabase
+      .from('company_profiles')
+      .select(`
+        id,
+        legal_name,
+        industry,
+        trade_license_url,
+        license_uploaded_at
+      `)
+      .eq('verification_status', 'pending')
+      .order('license_uploaded_at', { ascending: true }),
   ])
 
   return (
@@ -64,16 +80,34 @@ export default async function AdminDashboard() {
         <h1 className="text-2xl font-bold text-white mb-8">Admin Dashboard</h1>
 
         {/* Live stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <StatCard label="Total Students"        value={studentCount     ?? 0} colorKey="students"  />
           <StatCard label="Total Companies"       value={companyCount     ?? 0} colorKey="companies" />
-          <StatCard label="Pending Verifications" value={pendingVerifCount ?? 0} colorKey="pending"   />
+          <StatCard label="Pending Skills"        value={pendingVerifCount ?? 0} colorKey="pending"   />
+          <StatCard label="Pending Companies"     value={pendingCompanyCount ?? 0} colorKey="pendingCompanies" />
         </div>
 
-        {/* Placeholder queue sections — filled in Phase 2 & 3 */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PlaceholderCard title="🔍 Skill Test Queue"         note="Available in Phase 2" />
-          <PlaceholderCard title="🏢 Company Verification Queue" note="Available in Phase 3" />
+        {/* ═══════════════════════════════════════════════════════════════════
+            Company Verification Queue (Story 1.2)
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold text-white mb-4">🏢 Company Verification Queue</h2>
+          
+          {pendingCompanies && pendingCompanies.length > 0 ? (
+            <CompanyVerificationQueue companies={pendingCompanies} />
+          ) : (
+            <div className="glass rounded-xl p-6 text-center">
+              <p className="text-slate-400">No companies pending verification</p>
+            </div>
+          )}
+        </div>
+
+        {/* Skill Test Queue - Phase 2 */}
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold text-white mb-4">🔍 Skill Test Queue</h2>
+          <div className="glass rounded-xl p-6">
+            <p className="text-slate-500 text-sm">Available in Phase 2 (Skill Verification)</p>
+          </div>
         </div>
       </main>
 
@@ -88,15 +122,6 @@ function StatCard({ label, value, colorKey }) {
     <div className={`glass rounded-xl p-5 border ${STAT_COLORS[colorKey]}`}>
       <p className="text-slate-400 text-xs mb-1">{label}</p>
       <p className="text-white text-3xl font-bold">{value}</p>
-    </div>
-  )
-}
-
-function PlaceholderCard({ title, note }) {
-  return (
-    <div className="glass rounded-xl p-6">
-      <h3 className="text-white font-semibold mb-2">{title}</h3>
-      <p className="text-slate-500 text-sm">{note}</p>
     </div>
   )
 }

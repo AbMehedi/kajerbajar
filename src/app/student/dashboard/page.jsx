@@ -2,37 +2,36 @@
 // Member B owns this file.
 // Uses .gradient-brand and .glass from globals.css — change colours there, not here.
 
-
-import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: 'Student Dashboard — KaajerBazar',
-  description: 'Your KaajerBazar student workspace',
-}
+  title: "Student Dashboard — KaajerBazar",
+  description: "Your KaajerBazar student workspace",
+};
 
 export default async function StudentDashboard() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  if (!user) redirect('/login')
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from('users_profiles')
-    .select('full_name, role, email')
-    .eq('id', user.id)
-    .single()
+    .from("users_profiles")
+    .select("full_name, role, email")
+    .eq("id", user.id)
+    .single();
 
-  if (profile?.role !== 'student') redirect('/unauthorized')
+  if (profile?.role !== "student") redirect("/unauthorized");
 
   const { data: studentProfile } = await supabase
-    .from('student_profiles')
-    .select('username, university, kaajerscore, wallet_balance')
-    .eq('id', user.id)
-    .single()
+    .from("student_profiles")
+    .select("username, university, kaajerscore, wallet_balance")
+    .eq("id", user.id)
+    .single();
 
   return (
     <div className="gradient-brand min-h-screen">
@@ -48,28 +47,46 @@ export default async function StudentDashboard() {
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-6 py-10">
         <h1 className="text-2xl font-bold text-white mb-1">
-          Welcome back, {profile?.full_name?.split(' ')[0]} 👋
+          Welcome back, {profile?.full_name?.split(" ")[0]} 👋
         </h1>
-        <p className="text-slate-400 text-sm mb-8">@{studentProfile?.username}</p>
+        <p className="text-slate-400 text-sm mb-8">
+          @{studentProfile?.username}
+        </p>
 
         {/* Stats cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          <StatCard label="KaajerScore" value={(studentProfile?.kaajerscore ?? 0).toFixed(1)} unit="/ 100" />
-          <StatCard label="Wallet Balance" value={`৳${(studentProfile?.wallet_balance ?? 0).toFixed(2)}`} />
-          <StatCard label="University" value={studentProfile?.university ?? '—'} />
+          <StatCard
+            label="KaajerScore"
+            value={(studentProfile?.kaajerscore ?? 0).toFixed(1)}
+            unit="/ 100"
+          />
+          <StatCard
+            label="Wallet Balance"
+            value={`৳${(studentProfile?.wallet_balance ?? 0).toFixed(2)}`}
+          />
+          <StatCard
+            label="University"
+            value={studentProfile?.university ?? "—"}
+          />
         </div>
 
         {/* Placeholder sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PlaceholderCard title="✅ Verified Skills" body="Your verified skills will appear here after Phase 2." />
-          <PlaceholderCard title="📁 Active Projects" body="Your active projects will appear here after Phase 3." />
+          <PlaceholderCard
+            title="✅ Verified Skills"
+            body="Your verified skills will appear here after Phase 2."
+          />
+          <PlaceholderCard
+            title="📁 Active Projects"
+            body="Your active projects will appear here after Phase 3."
+          />
         </div>
       </main>
     </div>
-  )
+  );
 }
 
-function StatCard({ label, value, unit = '' }) {
+function StatCard({ label, value, unit = "" }) {
   return (
     <div className="glass rounded-xl p-5">
       <p className="text-slate-400 text-xs mb-1">{label}</p>
@@ -78,7 +95,7 @@ function StatCard({ label, value, unit = '' }) {
         {unit && <span className="text-slate-500 text-sm ml-1">{unit}</span>}
       </p>
     </div>
-  )
+  );
 }
 
 function PlaceholderCard({ title, body }) {
@@ -87,7 +104,7 @@ function PlaceholderCard({ title, body }) {
       <h3 className="text-white font-semibold mb-2">{title}</h3>
       <p className="text-slate-500 text-sm">{body}</p>
     </div>
-  )
+  );
 }
 
 // Client component for logout (must be inline or extracted to a separate file)
@@ -102,5 +119,5 @@ function LogoutButton() {
         Logout
       </button>
     </form>
-  )
+  );
 }

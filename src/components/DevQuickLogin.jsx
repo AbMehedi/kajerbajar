@@ -58,7 +58,7 @@ export default function DevQuickLogin() {
 
       {/* Dropdown — opens upward so it doesn't go off screen */}
       {isOpen && (
-        <div className="absolute top-12 right-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 w-48">
+        <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2 w-48">
           <p className="text-xs text-gray-600 px-2 py-1 font-semibold">Quick Login (Dev Only)</p>
           {TEST_USERS.map((user) => (
             <button

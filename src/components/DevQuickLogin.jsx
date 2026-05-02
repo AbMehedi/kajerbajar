@@ -46,19 +46,19 @@ export default function DevQuickLogin() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed bottom-4 left-4 z-50">
       {/* Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors"
+        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors shadow-lg"
         title="Dev: Quick login as any role"
       >
         🔑 Dev Login
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — opens upward so it doesn't go off screen */}
       {isOpen && (
-        <div className="absolute top-12 right-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 w-48">
+        <div className="absolute bottom-12 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 w-48">
           <p className="text-xs text-gray-600 px-2 py-1 font-semibold">Quick Login (Dev Only)</p>
           {TEST_USERS.map((user) => (
             <button

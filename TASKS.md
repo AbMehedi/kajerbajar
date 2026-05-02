@@ -23,15 +23,17 @@ _Goal: Establish the core infrastructure and secure access._
 - [x] **Landing Page**: Premium hero section and feature overview.
 - [x] **Dashboard Skeletons**: Basic layouts for all three user roles.
 
-### Phase 2: Skill Verification & AI Integration 🟡 (In Progress)
+### Phase 2: Skill Verification & AI Integration 🟢 (Completed)
 
 _Goal: Allow students to prove their expertise using AI-driven verification._
 
-- [ ] **Student Profile Completion**: Extend registration to collect university, skills, and bio.
-- [ ] **Skill Submission UI**: Interface for students to submit proofs (text/files) for verification.
-- [ ] **AI Verification Logic**: Integration with LLM to generate verification briefs and match submissions.
-- [ ] **Admin Verification Queue**: A dashboard for admins to approve/reject skill verification requests.
-- [ ] **Skills Display**: Show verified badges on student dashboards.
+- [x] **Student Profile Completion**: `/student/profile/edit` page + `GET/POST /api/student/profile` API to update university, bio, graduation year, and portfolio URL.
+- [x] **Skill Submission UI**: `SkillVerification.jsx` — students request an AI brief, then submit work via drag-and-drop file upload (ZIP, PDF, etc., up to 50 MB) and/or text description.
+- [x] **File Upload Infrastructure**: Supabase `skill-submissions` bucket + signed upload URLs via `GET /api/skills/verify/upload-url`. Files go browser → Storage directly (no server bottleneck).
+- [x] **AI Verification Logic**: `POST /api/skills/verify/start` calls Groq (Llama 3) to generate a 2-hour tailored project brief per skill. Fallback brief if AI is unavailable.
+- [x] **Admin Verification Queue**: `SkillReviewQueue.jsx` — admins expand each submission to see the AI brief, student description, download attached files (signed 60s URL), and Approve / Request Revision / Reject.
+- [x] **Skills Display**: `SkillBadges.jsx` — approved verifications render as green skill badges on the student dashboard.
+- [x] **Badge Granting**: On Admin Approve, a record is upserted to the `badges` table via the service-role client.
 
 ### Phase 3: Project Marketplace ⚪ (Upcoming)
 
@@ -70,17 +72,20 @@ _Goal: Final refinements for production readiness._
 
 ---
 
-## 🛠️ Current Task List
+## 🛠️ Current Task List (Phase 3 Focus)
 
-| Task ID | Description                                   | Status | Priority |
-| :------ | :-------------------------------------------- | :----- | :------- |
-| T001    | Implement Student Profile Edit/Complete page  | To Do  | High     |
-| T002    | Set up Supabase Storage for Skill Proofs      | To Do  | High     |
-| T003    | Build Admin Skill Review Dashboard            | To Do  | Medium   |
-| T004    | Integrate AI API for Skill Matching           | To Do  | Medium   |
-| T005    | Implement Project Creation Form for Companies | To Do  | High     |
+| Task ID | Description                                          | Status | Priority |
+| :------ | :--------------------------------------------------- | :----- | :------- |
+| T001    | ~~Student Profile Edit page~~                        | ✅ Done | —        |
+| T002    | ~~Supabase Storage for Skill Files~~                 | ✅ Done | —        |
+| T003    | ~~Admin Skill Review Dashboard~~                     | ✅ Done | —        |
+| T004    | ~~AI Brief Generation (Groq/Llama 3)~~               | ✅ Done | —        |
+| T005    | Company: Project Creation Form                       | To Do  | High     |
+| T006    | Student: Project Discovery & Browse page             | To Do  | High     |
+| T007    | AI Match Score between student skills & project      | To Do  | Medium   |
+| T008    | Application System (student apply, company select)   | To Do  | High     |
 
 ---
 
 > [!NOTE]
-> This plan follows the Extreme Programming (XP) principles with iterative updates. Each phase will be refined as development progresses.
+> **Phase 2 is fully complete.** Next up is Phase 3 — the Project Marketplace. Start with T005 (Company Project Creation).

@@ -5,6 +5,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import TradeLicenseUpload from './TradeLicenseUpload'
+import LogoutButton from '@/components/LogoutButton'
 
 export const metadata = {
   title: 'Company Dashboard — KaajerBazar',
@@ -43,15 +44,8 @@ export default async function CompanyDashboard() {
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="text-white font-bold text-lg">কাজের বাজার</span>
         <div className="flex items-center gap-4">
-          <span className="text-slate-400 text-sm">{companyProfile?.legal_name}</span>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="text-xs text-slate-400 hover:text-red-400 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
-            >
-              Logout
-            </button>
-          </form>
+          <span className="text-slate-300 text-sm font-medium">{companyProfile?.legal_name}</span>
+          <LogoutButton />
         </div>
       </header>
 

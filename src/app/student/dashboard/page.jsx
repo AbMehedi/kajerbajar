@@ -4,6 +4,9 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
+import SkillVerification from "./SkillVerification";
+import SkillBadges from "./SkillBadges";
 
 export const metadata = {
   title: "Student Dashboard — KaajerBazar",
@@ -39,7 +42,9 @@ export default async function StudentDashboard() {
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="text-white font-bold text-lg">কাজের বাজার</span>
         <div className="flex items-center gap-4">
-          <span className="text-slate-400 text-sm">{profile?.full_name}</span>
+          <span className="text-slate-300 text-sm font-medium">
+            {profile?.full_name}
+          </span>
           <LogoutButton />
         </div>
       </header>
@@ -70,12 +75,12 @@ export default async function StudentDashboard() {
           />
         </div>
 
-        {/* Placeholder sections */}
+        {/* Skill Badges — earned approved skills */}
+        <SkillBadges />
+
+        {/* Skill Verification — Phase 2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PlaceholderCard
-            title="✅ Verified Skills"
-            body="Your verified skills will appear here after Phase 2."
-          />
+          <SkillVerification />
           <PlaceholderCard
             title="📁 Active Projects"
             body="Your active projects will appear here after Phase 3."
@@ -104,20 +109,5 @@ function PlaceholderCard({ title, body }) {
       <h3 className="text-white font-semibold mb-2">{title}</h3>
       <p className="text-slate-500 text-sm">{body}</p>
     </div>
-  );
-}
-
-// Client component for logout (must be inline or extracted to a separate file)
-// For Phase 1 simplicity, we use a form action pattern
-function LogoutButton() {
-  return (
-    <form action="/api/auth/logout" method="POST">
-      <button
-        type="submit"
-        className="text-xs text-slate-400 hover:text-red-400 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
-      >
-        Logout
-      </button>
-    </form>
   );
 }

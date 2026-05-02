@@ -15,12 +15,12 @@ const TEST_USERS = [
 ]
 
 export default function DevQuickLogin() {
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') return null
-
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  // Only show in development - move this AFTER hooks to satisfy Rules of Hooks
+  if (process.env.NODE_ENV !== 'development') return null
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,

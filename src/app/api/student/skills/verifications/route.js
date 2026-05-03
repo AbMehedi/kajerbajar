@@ -23,7 +23,7 @@ export async function GET() {
 
     const { data: verifications, error } = await supabase
       .from('skill_verifications')
-      .select('id, skill_category, status, ai_brief, submission_text, submitted_at, admin_feedback, created_at')
+      .select('id, skill_category, status, ai_brief, submission_text, submission_file_url, submitted_at, admin_feedback, created_at')
       .eq('student_id', user.id)
       .order('created_at', { ascending: false })
 

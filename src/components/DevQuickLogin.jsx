@@ -33,9 +33,10 @@ export default function DevQuickLogin() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
 
-      // Redirect to appropriate dashboard
+      // Redirect to appropriate dashboard and refresh to clear router cache
       const role = TEST_USERS.find((u) => u.email === email)?.role
       router.push(`/${role}/dashboard`)
+      router.refresh()
       setIsOpen(false)
     } catch (err) {
       console.error('Quick login failed:', err)

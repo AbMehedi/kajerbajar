@@ -43,6 +43,19 @@ export default async function CompanyDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  // Story 3.2: Fetch latest 5 applicants across all of this company's projects.
+  // Guard: .in() with an empty array is invalid in PostgREST - skip if no projects.
+  // Join path: applications.student_id -> student_profiles -> users_profiles (full_name)
+  let recentApplicants = []
+  if (projects && projects.length > 0) {
+    const { data } = await supabase
+      .from('applications')
+      .select('id, status, created_at, projects ( title ), student_profiles ( users_profiles ( full_name ) )')
+      .in('project_id', projects.map((p) => p.id))
+      .order('created_at', { ascending: false })
+      .limit(5)
+    recentApplicants = data ?? []
+  }
   // Determine verification state for UI
   const verificationStatus = companyProfile?.verification_status || 'not_submitted'
 
@@ -186,15 +199,65 @@ export default async function CompanyDashboard() {
             )}
           </div>
 
-          {/* ── Applicants placeholder (Phase 3.2) ── */}
-          <div className="glass rounded-xl p-6">
-            <h3 className="text-white font-semibold mb-2">👥 Applicants</h3>
-            <p className="text-slate-500 text-sm">
-              Applicants for your projects will appear here after Phase 3.2.
+          {/* ── Story 3.2: Applicants card (real data) ── */}
+          <div className="glass rounded-xl p-6 flex flex-col gap-4">
+            <h3 className="text-white font-semibold">👥 Applicants</h3>
+
+            {!recentApplicants || recentApplicants.length === 0 ? (
+              <p className="text-slate-500 text-sm">
+                {(projects ?? []).length === 0
+                  ? 'Post a project to start receiving applications.'
+                  : 'No applications received yet.'}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {recentApplicants.map((app) => (
+                  <li
+                    key={app.id}
+                    className="flex items-start justify-between gap-3 py-2 border-b border-white/5 last:border-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-slate-200 text-sm font-medium truncate">
+                        {app.student_profiles?.users_profiles?.full_name ?? 'Unknown Student'}
+                      </p>
+                      <p className="text-slate-500 text-xs truncate mt-0.5">
+                        {app.projects?.title ?? '—'}
+                      </p>
+                    </div>
+                    <ApplicantStatusBadge status={app.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="text-slate-600 text-xs">
+              Full applicant management coming in Phase 4.
             </p>
           </div>
         </div>
       </main>
     </div>
+  )
+}
+
+// Story 3.2: Colour-coded badge for application status (company-side view)
+function ApplicantStatusBadge({ status }) {
+  const styles = {
+    pending:  'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    selected: 'bg-green-500/15 text-green-400 border-green-500/30',
+    rejected: 'bg-red-500/15 text-red-400 border-red-500/30',
+  }
+  const labels = {
+    pending:  'Pending',
+    selected: 'Selected',
+    rejected: 'Rejected',
+  }
+  const cls = styles[status] ?? 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+  return (
+    <span
+      className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${cls}`}
+    >
+      {labels[status] ?? status}
+    </span>
   )
 }

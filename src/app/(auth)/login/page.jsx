@@ -53,6 +53,7 @@ export default function LoginPage() {
       .single();
 
     router.push(ROLE_DASHBOARD[profile?.role] ?? "/");
+    router.refresh();
   }
 
   async function handleGoogleLogin() {

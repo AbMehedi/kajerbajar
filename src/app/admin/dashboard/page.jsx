@@ -72,9 +72,15 @@ export default async function AdminDashboard() {
       .from("skill_verifications")
       .select(
         `
-        id, skill_category, status, ai_brief, submission_text, submitted_at, created_at, student_id,
-        users_profiles!skill_verifications_student_id_fkey (full_name, email),
-        student_profiles!skill_verifications_student_id_fkey (username, university)
+        id, skill_category, status, ai_brief, submission_text, submission_file_url, submitted_at, created_at, student_id,
+        student_profiles (
+          username, 
+          university,
+          users_profiles (
+            full_name, 
+            email
+          )
+        )
       `,
       )
       .eq("status", "submitted")

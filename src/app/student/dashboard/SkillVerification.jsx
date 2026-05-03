@@ -3,8 +3,12 @@
 // src/app/student/dashboard/SkillVerification.jsx
 // Phase 2 - Story 2.1: Student skill verification flow
 // 3 states: request brief → submit work (text + file) → view history
+//
+// ⚡ PERF: `initialVerifications` is pre-fetched in page.jsx (Server Component)
+// and passed as a prop, so no API call fires on mount. The client-side
+// fetchVerifications() is only called after the user submits or requests a brief.
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 const STATUS_CONFIG = {
   pending:            { label: 'Brief Ready',       color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
@@ -33,14 +37,15 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function SkillVerification() {
-  const [verifications, setVerifications] = useState([])
-  const [loading, setLoading] = useState(true)
+// `initialVerifications` is server-fetched in page.jsx — no mount fetch needed.
+export default function SkillVerification({ initialVerifications = [] }) {
+  const [verifications, setVerifications] = useState(initialVerifications)
+  const [loading, setLoading] = useState(false)
   const [view, setView] = useState('list') // 'list' | 'request' | 'submit'
   const [activeVerification, setActiveVerification] = useState(null)
 
-  useEffect(() => { fetchVerifications() }, [])
-
+  // Only called client-side after a mutation (submit / new request)
+  // to refresh the list without a full page reload.
   async function fetchVerifications() {
     setLoading(true)
     try {

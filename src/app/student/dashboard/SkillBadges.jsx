@@ -1,24 +1,24 @@
-'use client'
-
 // src/app/student/dashboard/SkillBadges.jsx
-// Displays a student's earned skill badges (approved verifications)
-
-import { useState, useEffect } from 'react'
+// Displays a student's earned skill badges (approved verifications).
+//
+// ⚡ PERF: This is a pure Server Component — no 'use client', no useEffect.
+// Verifications data is pre-fetched in page.jsx and passed as a prop,
+// eliminating a duplicate client-side API call on every dashboard load.
 
 const SKILL_ICONS = {
-  default:        '⚡',
-  react:          '⚛️',
-  python:         '🐍',
-  javascript:     '📜',
-  node:           '🟢',
-  design:         '🎨',
-  figma:          '🖼️',
-  nextjs:         '▲',
-  django:         '🌿',
-  flutter:        '💙',
-  sql:            '🗄️',
-  css:            '🎨',
-  typescript:     '🔷',
+  default:    '⚡',
+  react:      '⚛️',
+  python:     '🐍',
+  javascript: '📜',
+  node:       '🟢',
+  design:     '🎨',
+  figma:      '🖼️',
+  nextjs:     '▲',
+  django:     '🌿',
+  flutter:    '💙',
+  sql:        '🗄️',
+  css:        '🎨',
+  typescript: '🔷',
 }
 
 function getIcon(skillName) {
@@ -29,25 +29,9 @@ function getIcon(skillName) {
   return SKILL_ICONS.default
 }
 
-export default function SkillBadges() {
-  const [badges, setBadges] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchBadges() {
-      try {
-        const res = await fetch('/api/student/skills/verifications')
-        const data = await res.json()
-        const approved = (data.verifications || []).filter((v) => v.status === 'approved')
-        setBadges(approved)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchBadges()
-  }, [])
-
-  if (loading) return null
+// `verifications` is the full list (all statuses) — we filter to approved here.
+export default function SkillBadges({ verifications = [] }) {
+  const badges = verifications.filter((v) => v.status === 'approved')
 
   if (badges.length === 0) {
     return (

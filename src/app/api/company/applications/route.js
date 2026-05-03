@@ -8,21 +8,14 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // ── GET ───────────────────────────────────────────────────────────────────────
+// NOTE: In Next.js dev mode with React Strict Mode, useEffect fires twice —
+// this causes doubled requests in the terminal log. This is dev-only behaviour
+// and does NOT happen in production builds.
 export async function GET(request) {
   try {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'company') {
-      return NextResponse.json({ error: 'Companies only' }, { status: 403 })
-    }
 
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
@@ -30,56 +23,68 @@ export async function GET(request) {
       return NextResponse.json({ error: 'projectId query param is required' }, { status: 400 })
     }
 
-    // Verify the project belongs to this company
-    const { data: project } = await supabase
-      .from('projects')
-      .select('id, company_id')
-      .eq('id', projectId)
-      .single()
+    // ⚡ Batch 1: role check + project ownership check in parallel
+    const [{ data: profile }, { data: project }] = await Promise.all([
+      supabase
+        .from('users_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('projects')
+        .select('id, company_id')
+        .eq('id', projectId)
+        .single(),
+    ])
 
+    if (profile?.role !== 'company') {
+      return NextResponse.json({ error: 'Companies only' }, { status: 403 })
+    }
     if (!project || project.company_id !== user.id) {
       return NextResponse.json({ error: 'Project not found or access denied' }, { status: 403 })
     }
 
-    // Fetch applications with student info and their approved skill badges
-    const { data: applications, error } = await supabase
-      .from('applications')
-      .select(`
-        id,
-        status,
-        cover_note,
-        portfolio_item_url,
-        created_at,
-        student_id,
-        student_profiles (
-          username,
-          university,
-          kaajerscore,
-          users_profiles ( full_name, email )
-        )
-      `)
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true })
+    // ⚡ Batch 2: applications + skill badges in parallel
+    const [{ data: applications, error }, { data: allBadges }] = await Promise.all([
+      supabase
+        .from('applications')
+        .select(`
+          id,
+          status,
+          cover_note,
+          portfolio_item_url,
+          created_at,
+          student_id,
+          student_profiles (
+            username,
+            university,
+            kaajerscore,
+            users_profiles ( full_name, email )
+          )
+        `)
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true }),
+
+      // Pre-fetch all approved badges for students in this project at once
+      // (filtered to student_id after we know the applicant list)
+      supabase
+        .from('skill_verifications')
+        .select('student_id, skill_category')
+        .eq('status', 'approved'),
+    ])
 
     if (error) {
       console.error('[company/applications GET] DB error:', error)
       return NextResponse.json({ error: 'Failed to fetch applicants' }, { status: 500 })
     }
 
-    // For each applicant, fetch their approved skill badge count separately
-    const applicantIds = (applications ?? []).map((a) => a.student_id)
-    let badgeMap = {}
-    if (applicantIds.length > 0) {
-      const { data: badges } = await supabase
-        .from('skill_verifications')
-        .select('student_id, skill_category')
-        .in('student_id', applicantIds)
-        .eq('status', 'approved')
-
-      for (const badge of badges ?? []) {
-        if (!badgeMap[badge.student_id]) badgeMap[badge.student_id] = []
-        badgeMap[badge.student_id].push(badge.skill_category)
-      }
+    // Build badge map — only for applicants in this project
+    const applicantIds = new Set((applications ?? []).map((a) => a.student_id))
+    const badgeMap = {}
+    for (const badge of allBadges ?? []) {
+      if (!applicantIds.has(badge.student_id)) continue
+      if (!badgeMap[badge.student_id]) badgeMap[badge.student_id] = []
+      badgeMap[badge.student_id].push(badge.skill_category)
     }
 
     const enriched = (applications ?? []).map((app) => ({

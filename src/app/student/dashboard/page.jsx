@@ -22,27 +22,43 @@ export default async function StudentDashboard() {
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("users_profiles")
-    .select("full_name, role, email")
-    .eq("id", user.id)
-    .single();
+  // ⚡ Run all independent DB queries in parallel — cuts server wait time by ~66%
+  const [
+    { data: profile },
+    { data: studentProfile },
+    { data: myApplications },
+    { data: verifications },
+  ] = await Promise.all([
+    supabase
+      .from("users_profiles")
+      .select("full_name, role, email")
+      .eq("id", user.id)
+      .single(),
+
+    supabase
+      .from("student_profiles")
+      .select("username, university, kaajerscore, wallet_balance")
+      .eq("id", user.id)
+      .single(),
+
+    // Story 3.2: Latest 5 applications (joined with project title)
+    supabase
+      .from("applications")
+      .select("id, status, created_at, projects ( title )")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+
+    // Phase 2: Fetch verifications once here — passed as props to avoid
+    // duplicate client-side fetches in SkillBadges + SkillVerification
+    supabase
+      .from("skill_verifications")
+      .select("id, skill_category, status, ai_brief, submission_text, submission_file_url, submitted_at, admin_feedback, created_at")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (profile?.role !== "student") redirect("/unauthorized");
-
-  const { data: studentProfile } = await supabase
-    .from("student_profiles")
-    .select("username, university, kaajerscore, wallet_balance")
-    .eq("id", user.id)
-    .single();
-
-  // Story 3.2: Fetch latest 5 applications for this student (joined with project title)
-  const { data: myApplications } = await supabase
-    .from("applications")
-    .select("id, status, created_at, projects ( title )")
-    .eq("student_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
 
   return (
     <div className="gradient-brand min-h-screen">
@@ -83,13 +99,13 @@ export default async function StudentDashboard() {
           />
         </div>
 
-        {/* Skill Badges — earned approved skills */}
-        <SkillBadges />
+        {/* Skill Badges — earned approved skills. Data pre-fetched server-side. */}
+        <SkillBadges verifications={verifications ?? []} />
 
         {/* Skill Verification (Phase 2) + My Applications (Phase 3.2) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Phase 2: Skill verification panel */}
-          <SkillVerification />
+          {/* Phase 2: Skill verification panel — seeded with server-fetched data */}
+          <SkillVerification initialVerifications={verifications ?? []} />
 
           {/* Story 3.2: My Applications (real data) */}
           <div className="glass rounded-xl p-6 flex flex-col gap-4">

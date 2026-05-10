@@ -2,24 +2,18 @@
 // GET /api/student/skills/verifications
 // Returns all skill verifications for the logged-in student
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['student'],
+      forbiddenMessage: 'Students only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'student') {
-      return NextResponse.json({ error: 'Students only' }, { status: 403 })
-    }
+    const { supabase, user } = auth
 
     const { data: verifications, error } = await supabase
       .from('skill_verifications')

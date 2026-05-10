@@ -4,7 +4,7 @@
 //
 // Only the company that owns the project may call these endpoints.
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 // ── GET ───────────────────────────────────────────────────────────────────────
@@ -13,9 +13,11 @@ import { NextResponse } from 'next/server'
 // and does NOT happen in production builds.
 export async function GET(request) {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['company'],
+      forbiddenMessage: 'Companies only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
@@ -23,66 +25,66 @@ export async function GET(request) {
       return NextResponse.json({ error: 'projectId query param is required' }, { status: 400 })
     }
 
-    // ⚡ Batch 1: role check + project ownership check in parallel
-    const [{ data: profile }, { data: project }] = await Promise.all([
-      supabase
-        .from('users_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single(),
-      supabase
-        .from('projects')
-        .select('id, company_id')
-        .eq('id', projectId)
-        .single(),
-    ])
+    const { supabase, user } = auth
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id, company_id')
+      .eq('id', projectId)
+      .single()
 
-    if (profile?.role !== 'company') {
-      return NextResponse.json({ error: 'Companies only' }, { status: 403 })
-    }
     if (!project || project.company_id !== user.id) {
       return NextResponse.json({ error: 'Project not found or access denied' }, { status: 403 })
     }
 
-    // ⚡ Batch 2: applications + skill badges in parallel
-    const [{ data: applications, error }, { data: allBadges }] = await Promise.all([
-      supabase
-        .from('applications')
-        .select(`
-          id,
-          status,
-          cover_note,
-          portfolio_item_url,
-          created_at,
-          student_id,
-          student_profiles (
-            username,
-            university,
-            kaajerscore,
-            users_profiles ( full_name, email )
-          )
-        `)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true }),
-
-      // Pre-fetch all approved badges for students in this project at once
-      // (filtered to student_id after we know the applicant list)
-      supabase
-        .from('skill_verifications')
-        .select('student_id, skill_category')
-        .eq('status', 'approved'),
-    ])
+    // ⚡ Step 1: Fetch applications for this project
+    const { data: applications, error } = await supabase
+      .from('applications')
+      .select(`
+        id,
+        status,
+        cover_note,
+        portfolio_item_url,
+        created_at,
+        student_id,
+        student_profiles (
+          username,
+          university,
+          kaajerscore,
+          users_profiles ( full_name, email )
+        )
+      `)
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
 
     if (error) {
       console.error('[company/applications GET] DB error:', error)
       return NextResponse.json({ error: 'Failed to fetch applicants' }, { status: 500 })
     }
 
-    // Build badge map — only for applicants in this project
-    const applicantIds = new Set((applications ?? []).map((a) => a.student_id))
+    // Build applicant ID list for targeted badge query
+    const applicantIds = ((applications ?? []).map((a) => a.student_id))
+    
+    // ⚡ Step 2: Fetch approved badges ONLY for these applicants (not all in DB)
+    let allBadges = []
+    if (applicantIds.length > 0) {
+      const { data: badges, error: badgeError } = await supabase
+        .from('skill_verifications')
+        .select('student_id, skill_category')
+        .eq('status', 'approved')
+        .in('student_id', applicantIds)
+      
+      if (badgeError) {
+        console.error('[company/applications GET] Badge fetch error:', badgeError)
+        return NextResponse.json({ error: 'Failed to fetch badges' }, { status: 500 })
+      }
+      allBadges = badges ?? []
+    }
+
+    // Build badge map from filtered results
+    const applicantIdSet = new Set(applicantIds)
     const badgeMap = {}
-    for (const badge of allBadges ?? []) {
-      if (!applicantIds.has(badge.student_id)) continue
+    for (const badge of allBadges) {
+      if (!applicantIdSet.has(badge.student_id)) continue
       if (!badgeMap[badge.student_id]) badgeMap[badge.student_id] = []
       badgeMap[badge.student_id].push(badge.skill_category)
     }
@@ -103,22 +105,16 @@ export async function GET(request) {
 // Body: { applicationId: string, action: 'select' | 'reject' }
 export async function PATCH(request) {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['company'],
+      forbiddenMessage: 'Companies only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'company') {
-      return NextResponse.json({ error: 'Companies only' }, { status: 403 })
-    }
-
-    const body = await request.json()
-    const { applicationId, action } = body
+    const { supabase, user } = auth
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+    const { applicationId, action } = parsed.body
 
     if (!applicationId || !['select', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'applicationId and valid action (select|reject) are required' }, { status: 400 })

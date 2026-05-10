@@ -8,35 +8,18 @@
 //   4. Validate — required fields present & valid      → 400
 //   5. Insert   — INSERT into projects, return id      → 201
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabaseClient()
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['company'],
+      forbiddenMessage: 'Only company accounts can post projects.',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // ─── Step 1: Auth ──────────────────────────────────────────────
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // ─── Step 2: Role ──────────────────────────────────────────────
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || userProfile?.role !== 'company') {
-      return NextResponse.json(
-        { error: 'Only company accounts can post projects.' },
-        { status: 403 }
-      )
-    }
+    const { supabase, user } = auth
 
     // ─── Step 3: Verified ──────────────────────────────────────────
     const { data: companyProfile, error: companyError } = await supabase
@@ -53,12 +36,9 @@ export async function POST(request) {
     }
 
     // ─── Step 4: Validate ──────────────────────────────────────────
-    let body
-    try {
-      body = await request.json()
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 })
-    }
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+    const body = parsed.body
 
     const {
       title,

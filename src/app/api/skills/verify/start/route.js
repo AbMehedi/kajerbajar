@@ -2,30 +2,24 @@
 // POST /api/skills/verify/start
 // Student starts a skill verification — AI generates a project brief
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { generateSkillBrief } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
-    // 1. Auth check
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['student'],
+      forbiddenMessage: 'Only students can verify skills',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // 2. Role check — must be a student
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'student') {
-      return NextResponse.json({ error: 'Only students can verify skills' }, { status: 403 })
-    }
+    const { supabase, user } = auth
 
     // 3. Validate input
-    const { skill } = await request.json()
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+    const { skill } = parsed.body
     if (!skill || skill.trim().length < 2) {
       return NextResponse.json({ error: 'A valid skill name is required' }, { status: 400 })
     }

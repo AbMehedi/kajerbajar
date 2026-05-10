@@ -3,25 +3,18 @@
 // Returns the authenticated company's projects, each with total applicant count.
 // Used by: ApplicationsPanel.jsx (company dashboard)
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['company'],
+      forbiddenMessage: 'Companies only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // Role guard
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'company') {
-      return NextResponse.json({ error: 'Companies only' }, { status: 403 })
-    }
+    const { supabase, user } = auth
 
     // Fetch company's projects with applicant count via PostgREST aggregate
     const { data: projects, error } = await supabase

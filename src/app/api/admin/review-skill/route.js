@@ -2,31 +2,26 @@
 // POST /api/admin/review-skill
 // Admin approves, rejects, or requests revision on a skill verification
 
-import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
+import { createAdminSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 const VALID_ACTIONS = ['approve', 'reject', 'revision']
 
 export async function POST(request) {
   try {
-    // 1. Auth check
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['admin'],
+      forbiddenMessage: 'Admins only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // 2. Role check — admin only
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admins only' }, { status: 403 })
-    }
+    const { supabase, user } = auth
 
     // 3. Validate body
-    const { verificationId, action, feedback } = await request.json()
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+    const { verificationId, action, feedback } = parsed.body
 
     if (!verificationId) {
       return NextResponse.json({ error: 'verificationId is required' }, { status: 400 })

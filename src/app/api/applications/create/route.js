@@ -8,7 +8,7 @@
 //   4. Duplicate — existing (project_id, student_id) row     → 409
 //   5. Insert    — INSERT into applications, return id        → 201
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 // Simple UUID-v4 shape check (Supabase UUIDs always match this pattern)
@@ -16,38 +16,18 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabaseClient()
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['student'],
+      forbiddenMessage: 'Only student accounts can apply to projects.',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // ─── Step 1: Auth ──────────────────────────────────────────────
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // ─── Step 2: Role ──────────────────────────────────────────────
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || userProfile?.role !== 'student') {
-      return NextResponse.json(
-        { error: 'Only student accounts can apply to projects.' },
-        { status: 403 }
-      )
-    }
+    const { supabase, user } = auth
 
     // ─── Step 3: Validate ──────────────────────────────────────────
-    let body
-    try {
-      body = await request.json()
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 })
-    }
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+    const body = parsed.body
 
     const { project_id, cover_note, portfolio_item_url } = body
 

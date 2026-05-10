@@ -28,19 +28,14 @@ export async function GET(request) {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: profile } = await supabase
-          .from('users_profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        // If user has a profile (returning user), go to their dashboard
-        if (profile?.role) {
-          return NextResponse.redirect(`${origin}${ROLE_DASHBOARD[profile.role]}`)
+        // Check if role is already in JWT metadata (returning user)
+        const roleFromJwt = user.user_metadata?.role
+        if (roleFromJwt) {
+          return NextResponse.redirect(`${origin}${ROLE_DASHBOARD[roleFromJwt]}`)
         }
 
         // New Google user — they need to pick a role
-        // Redirect to a role-selection page (we'll create this next)
+        // Redirect to a role-selection page
         return NextResponse.redirect(`${origin}/auth/complete-profile`)
       }
     }

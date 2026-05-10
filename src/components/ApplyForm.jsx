@@ -49,7 +49,7 @@ export default function ApplyForm({ projectId, onSuccess, onCancel }) {
       }
       if (portfolioUrl.trim()) body.portfolio_item_url = portfolioUrl.trim()
 
-      const res = await fetch('/api/applications/create', {
+      const res = await fetch('/api/applications', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),

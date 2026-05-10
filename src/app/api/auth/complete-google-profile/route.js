@@ -3,31 +3,57 @@
 // Called from /auth/complete-profile page.
 
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
+import { jsonError, parseJsonBody, requireAuth } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
+    const auth = await requireAuth()
+    if (auth.errorResponse) return auth.errorResponse
+
+    const { user } = auth
     const supabase = await createAdminSupabaseClient()
 
-    const body = await request.json()
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+
+    const body = parsed.body
     const { userId, email, full_name, role, username, university, legal_name, industry } = body
 
-    if (!userId || !role) {
-      return NextResponse.json({ error: 'userId and role are required' }, { status: 400 })
+    // Ignore client-supplied userId for writes and reject mismatches.
+    if (userId && userId !== user.id) {
+      return jsonError('Forbidden', 403)
+    }
+
+    if (!role) {
+      return NextResponse.json({ error: 'role is required' }, { status: 400 })
     }
 
     if (!['student', 'company'].includes(role)) {
       return NextResponse.json({ error: 'role must be student or company' }, { status: 400 })
     }
 
+    const effectiveUserId = user.id
+    const effectiveEmail = user.email || email || null
+
+    // 0. Update user metadata with role (for JWT-based middleware checks)
+    const { error: metadataError } = await supabase.auth.admin.updateUserById(
+      effectiveUserId,
+      { user_metadata: { role } }
+    )
+
+    if (metadataError) {
+      return NextResponse.json({ error: metadataError.message }, { status: 500 })
+    }
+
     // 1. Insert into users_profiles (upsert in case it partially exists)
     const { error: profileError } = await supabase
       .from('users_profiles')
       .upsert({
-        id: userId,
-        email,
+        id: effectiveUserId,
+        email: effectiveEmail,
         role,
-        full_name: full_name || email,
+        full_name: full_name || effectiveEmail,
       })
 
     if (profileError) {
@@ -41,7 +67,7 @@ export async function POST(request) {
       }
       const { error } = await supabase
         .from('student_profiles')
-        .upsert({ id: userId, username, university: university || null })
+        .upsert({ id: effectiveUserId, username, university: university || null })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -52,7 +78,7 @@ export async function POST(request) {
       const { error } = await supabase
         .from('company_profiles')
         .upsert({
-          id: userId,
+          id: effectiveUserId,
           legal_name,
           industry: industry || null,
           verified: false,

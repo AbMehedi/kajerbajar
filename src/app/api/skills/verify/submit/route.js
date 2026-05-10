@@ -3,23 +3,28 @@
 // Student submits their completed work for a skill verification.
 // Accepts optional file metadata (path saved after direct browser→Storage upload).
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
-    // 1. Auth check
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['student'],
+      forbiddenMessage: 'Only students can submit skill verification work',
+    })
+    if (auth.errorResponse) return auth.errorResponse
+
+    const { supabase, user } = auth
 
     // 2. Parse body — text is optional IF a file is attached
+    const parsed = await parseJsonBody(request)
+    if (parsed.errorResponse) return parsed.errorResponse
+
     const {
       verificationId,
       submissionText,
       submissionFilePath,  // storage path e.g. "userId/verificationId/project.zip"
-      submissionFileName,  // original filename for display
-    } = await request.json()
+    } = parsed.body
 
     if (!verificationId) {
       return NextResponse.json({ error: 'verificationId is required' }, { status: 400 })

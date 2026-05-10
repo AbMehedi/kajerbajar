@@ -50,7 +50,7 @@ export default function CompleteProfile() {
     const res = await fetch('/api/auth/complete-google-profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, userId: user.id }),
+      body: JSON.stringify(payload),
     })
 
     const data = await res.json()

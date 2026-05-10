@@ -29,12 +29,13 @@ export async function POST(request) {
     // Use service-role admin client to create user without email confirmation
     const supabase = await createAdminSupabaseClient()
 
-    // 1. Create auth user
+    // 1. Create auth user with role in user_metadata
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true, // auto-confirm for development
+        user_metadata: { role }, // Store role in JWT for middleware
       })
 
     if (authError) {

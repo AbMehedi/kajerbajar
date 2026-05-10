@@ -7,52 +7,25 @@
 //   3. Sets verification_status = 'pending'
 //   4. Admin sees it in their queue
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-  const supabase = await createServerSupabaseClient()
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 1: Verify user is authenticated
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
-  if (authError || !user) {
-    return NextResponse.json(
-      { error: 'You must be authenticated to upload a trade license' },
-      { status: 401 }
-    )
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 2: Verify user is a company
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: profile, error: profileError } = await supabase
-    .from('users_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  
-  if (profileError || profile?.role !== 'company') {
-    return NextResponse.json(
-      { error: 'Only companies can upload trade licenses' },
-      { status: 403 }
-    )
-  }
+  const auth = await requireAuthAndRole({
+    unauthorizedMessage: 'You must be authenticated to upload a trade license',
+    allowedRoles: ['company'],
+    forbiddenMessage: 'Only companies can upload trade licenses',
+  })
+  if (auth.errorResponse) return auth.errorResponse
+
+  const { supabase, user } = auth
   
   // ═══════════════════════════════════════════════════════════════════
   // Step 3: Validate request body
   // ═══════════════════════════════════════════════════════════════════
-  let body
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON in request body' },
-      { status: 400 }
-    )
-  }
+  const parsed = await parseJsonBody(request, 'Invalid JSON in request body')
+  if (parsed.errorResponse) return parsed.errorResponse
+  const body = parsed.body
   
   const { file_url } = body
   

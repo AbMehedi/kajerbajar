@@ -5,7 +5,7 @@
 //
 // Fields: title, description, required_skills (tag input), budget_bdt,
 //         duration_weeks, deadline, deliverable_format (optional)
-// Submits to POST /api/projects/create
+// Submits to POST /api/projects
 // States: idle → submitting → success | error
 
 import { useState, useRef } from 'react'
@@ -132,7 +132,7 @@ export default function PostProjectForm() {
     setStatus('submitting')
 
     try {
-      const res = await fetch('/api/projects/create', {
+      const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

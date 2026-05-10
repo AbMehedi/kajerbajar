@@ -2,24 +2,18 @@
 // GET /api/admin/skills/pending
 // Returns all submitted skill verifications awaiting admin review
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['admin'],
+      forbiddenMessage: 'Admins only',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admins only' }, { status: 403 })
-    }
+    const { supabase } = auth
 
     const { data: submissions, error } = await supabase
       .from('skill_verifications')

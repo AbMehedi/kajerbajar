@@ -3,7 +3,7 @@
 // Returns a signed upload URL so the browser can PUT a file directly to Supabase Storage.
 // The file never passes through the Next.js server.
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 const BUCKET = 'skill-submissions'
@@ -16,21 +16,13 @@ function sanitizeFilename(name) {
 
 export async function GET(request) {
   try {
-    // 1. Auth check
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuthAndRole({
+      allowedRoles: ['student'],
+      forbiddenMessage: 'Only students can upload submissions',
+    })
+    if (auth.errorResponse) return auth.errorResponse
 
-    // 2. Role check
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'student') {
-      return NextResponse.json({ error: 'Only students can upload submissions' }, { status: 403 })
-    }
+    const { supabase, user } = auth
 
     // 3. Read query params
     const { searchParams } = new URL(request.url)

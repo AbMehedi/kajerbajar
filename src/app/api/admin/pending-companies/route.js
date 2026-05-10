@@ -4,39 +4,18 @@
 // Returns: Array of companies with verification_status = 'pending'
 // Each company includes: id, legal_name, email, trade_license_url, license_uploaded_at
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = await createServerSupabaseClient()
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 1: Verify user is authenticated
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
-  if (authError || !user) {
-    return NextResponse.json(
-      { error: 'You must be authenticated to view pending companies' },
-      { status: 401 }
-    )
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 2: Verify user is an admin
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: profile, error: profileError } = await supabase
-    .from('users_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  
-  if (profileError || profile?.role !== 'admin') {
-    return NextResponse.json(
-      { error: 'Only admins can view pending company verifications' },
-      { status: 403 }
-    )
-  }
+  const auth = await requireAuthAndRole({
+    unauthorizedMessage: 'You must be authenticated to view pending companies',
+    allowedRoles: ['admin'],
+    forbiddenMessage: 'Only admins can view pending company verifications',
+  })
+  if (auth.errorResponse) return auth.errorResponse
+
+  const { supabase } = auth
   
   // ═══════════════════════════════════════════════════════════════════
   // Step 3: Fetch pending companies with their user info

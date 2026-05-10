@@ -5,52 +5,25 @@
 //   - 'approve': Sets verified=true, verification_status='verified'
 //   - 'reject':  Sets verification_status='rejected', requires feedback
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-  const supabase = await createServerSupabaseClient()
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 1: Verify user is authenticated
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
-  if (authError || !user) {
-    return NextResponse.json(
-      { error: 'You must be authenticated to verify companies' },
-      { status: 401 }
-    )
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 2: Verify user is an admin
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: profile, error: profileError } = await supabase
-    .from('users_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  
-  if (profileError || profile?.role !== 'admin') {
-    return NextResponse.json(
-      { error: 'Only admins can verify companies' },
-      { status: 403 }
-    )
-  }
+  const auth = await requireAuthAndRole({
+    unauthorizedMessage: 'You must be authenticated to verify companies',
+    allowedRoles: ['admin'],
+    forbiddenMessage: 'Only admins can verify companies',
+  })
+  if (auth.errorResponse) return auth.errorResponse
+
+  const { supabase, user } = auth
   
   // ═══════════════════════════════════════════════════════════════════
   // Step 3: Validate request body
   // ═══════════════════════════════════════════════════════════════════
-  let body
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON in request body' },
-      { status: 400 }
-    )
-  }
+  const parsed = await parseJsonBody(request, 'Invalid JSON in request body')
+  if (parsed.errorResponse) return parsed.errorResponse
+  const body = parsed.body
   
   const { company_id, action, feedback } = body
   

@@ -1,12 +1,15 @@
 // src/app/student/dashboard/page.jsx
-// Member B owns this file.
-// Uses .gradient-brand and .glass from globals.css — change colours there, not here.
+// D1: Student dashboard — upgraded with icon StatCards, quick actions, applications table.
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
-import LogoutButton from "@/components/LogoutButton";
-import SkillVerification from "./SkillVerification";
+
 import SkillBadges from "./SkillBadges";
+import DashboardShell from "@/components/layout/DashboardShell";
+import StatCard from "@/components/ui/StatCard";
+import EmptyState from "@/components/ui/EmptyState";
+import { Target, Wallet, GraduationCap, ArrowRight, FlaskConical } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = {
   title: "Student Dashboard — KaajerBazar",
@@ -22,7 +25,7 @@ export default async function StudentDashboard() {
 
   if (!user) redirect("/login");
 
-  // ⚡ Run all independent DB queries in parallel — cuts server wait time by ~66%
+  // ⚡ Run all independent DB queries in parallel
   const [
     { data: profile },
     { data: studentProfile },
@@ -41,7 +44,6 @@ export default async function StudentDashboard() {
       .eq("id", user.id)
       .single(),
 
-    // Story 3.2: Latest 5 applications (joined with project title)
     supabase
       .from("applications")
       .select("id, status, created_at, projects ( title )")
@@ -49,8 +51,6 @@ export default async function StudentDashboard() {
       .order("created_at", { ascending: false })
       .limit(5),
 
-    // Phase 2: Fetch verifications once here — passed as props to avoid
-    // duplicate client-side fetches in SkillBadges + SkillVerification
     supabase
       .from("skill_verifications")
       .select("id, skill_category, status, ai_brief, submission_text, submission_file_url, submitted_at, admin_feedback, created_at")
@@ -60,133 +60,153 @@ export default async function StudentDashboard() {
 
   if (profile?.role !== "student") redirect("/unauthorized");
 
+  const firstName = profile?.full_name?.split(" ")[0] ?? "there";
+
   return (
-    <div className="gradient-brand min-h-screen">
-      {/* Header */}
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-bold text-lg">কাজের বাজার</span>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-300 text-sm font-medium">
-            {profile?.full_name}
-          </span>
-          <LogoutButton />
+    <DashboardShell
+      role="student"
+      fullName={profile?.full_name ?? ""}
+      activePath="/student/dashboard"
+    >
+      <div className="max-w-5xl mx-auto px-6 py-10">
+
+        {/* ── Page header ── */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white mb-1">
+            Welcome back, {firstName} 👋
+          </h1>
+          <p className="text-slate-400 text-sm">
+            @{studentProfile?.username}
+          </p>
         </div>
-      </header>
 
-      {/* Main content */}
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold text-white mb-1">
-          Welcome back, {profile?.full_name?.split(" ")[0]} 👋
-        </h1>
-        <p className="text-slate-400 text-sm mb-8">
-          @{studentProfile?.username}
-        </p>
-
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        {/* ── Stat cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <StatCard
+            icon={<Target className="w-5 h-5" />}
             label="KaajerScore"
             value={(studentProfile?.kaajerscore ?? 0).toFixed(1)}
             unit="/ 100"
+            color="purple"
           />
           <StatCard
+            icon={<Wallet className="w-5 h-5" />}
             label="Wallet Balance"
             value={`৳${(studentProfile?.wallet_balance ?? 0).toFixed(2)}`}
+            color="green"
           />
           <StatCard
+            icon={<GraduationCap className="w-5 h-5" />}
             label="University"
             value={studentProfile?.university ?? "—"}
+            color="blue"
           />
         </div>
 
-        {/* Skill Badges — earned approved skills. Data pre-fetched server-side. */}
+        {/* ── Quick actions ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <Link
+            href="/student/projects"
+            className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-purple-500/40 transition-colors group"
+          >
+            <div>
+              <p className="text-white font-semibold text-sm">Browse Projects</p>
+              <p className="text-slate-500 text-xs mt-0.5">Find your next gig</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+          </Link>
+          <Link
+            href="/student/skill-test"
+            className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-purple-500/40 transition-colors group"
+          >
+            <div>
+              <p className="text-white font-semibold text-sm">Submit a Skill</p>
+              <p className="text-slate-500 text-xs mt-0.5">Get a verified badge</p>
+            </div>
+            <FlaskConical className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+          </Link>
+        </div>
+
+        {/* ── Skill Badges ── */}
         <SkillBadges verifications={verifications ?? []} />
 
-        {/* Skill Verification (Phase 2) + My Applications (Phase 3.2) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Phase 2: Skill verification panel — seeded with server-fetched data */}
-          <SkillVerification initialVerifications={verifications ?? []} />
-
-          {/* Story 3.2: My Applications (real data) */}
+        {/* ── Bottom section ── */}
+        <div className="mt-6">
+          {/* My Applications */}
           <div className="glass rounded-xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="text-white font-semibold">📁 My Applications</h3>
-              <a
+              <Link
                 href="/student/projects"
                 className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
               >
-                Browse Projects →
-              </a>
+                Browse →
+              </Link>
             </div>
 
             {!myApplications || myApplications.length === 0 ? (
-              <p className="text-slate-500 text-sm">
-                You haven&apos;t applied to any projects yet.{" "}
-                <a href="/student/projects" className="text-purple-400 hover:underline">
-                  Browse open projects
-                </a>
-                .
-              </p>
+              <EmptyState
+                icon="📋"
+                title="No applications yet"
+                description="Browse open projects and apply to get started."
+                actionLabel="Browse Projects"
+                actionHref="/student/projects"
+              />
             ) : (
-              <ul className="space-y-2">
-                {myApplications.map((app) => (
-                  <li
-                    key={app.id}
-                    className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0"
-                  >
-                    <p className="text-slate-200 text-sm font-medium truncate min-w-0">
-                      {app.projects?.title ?? "Unknown Project"}
-                    </p>
-                    <ApplicationStatusBadge status={app.status} />
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-slate-500 text-xs border-b border-white/8">
+                      <th className="text-left pb-2 font-medium">Project</th>
+                      <th className="text-left pb-2 font-medium">Date</th>
+                      <th className="text-right pb-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myApplications.map((app) => (
+                      <tr key={app.id} className="border-b border-white/5 last:border-0">
+                        <td className="py-2.5 pr-3">
+                          <p className="text-slate-200 font-medium truncate max-w-[140px]">
+                            {app.projects?.title ?? "Unknown Project"}
+                          </p>
+                        </td>
+                        <td className="py-2.5 pr-3 text-slate-500 text-xs whitespace-nowrap">
+                          {new Date(app.created_at).toLocaleDateString("en-GB", {
+                            day: "numeric", month: "short",
+                          })}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <ApplicationStatusBadge status={app.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }
 
-function StatCard({ label, value, unit = "" }) {
-  return (
-    <div className="glass rounded-xl p-5">
-      <p className="text-slate-400 text-xs mb-1">{label}</p>
-      <p className="text-white text-xl font-bold">
-        {value}
-        {unit && <span className="text-slate-500 text-sm ml-1">{unit}</span>}
-      </p>
-    </div>
-  );
-}
+// ── Application status badge ───────────────────────────────────────────────────
 
-function PlaceholderCard({ title, body }) {
-  return (
-    <div className="glass rounded-xl p-6">
-      <h3 className="text-white font-semibold mb-2">{title}</h3>
-      <p className="text-slate-500 text-sm">{body}</p>
-    </div>
-  );
-}
-
-// Story 3.2: Colour-coded badge for application status
 function ApplicationStatusBadge({ status }) {
   const styles = {
-    pending:  'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    selected: 'bg-green-500/15 text-green-400 border-green-500/30',
-    rejected: 'bg-red-500/15 text-red-400 border-red-500/30',
+    pending:  "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    selected: "bg-green-500/15 text-green-400 border-green-500/30",
+    rejected: "bg-red-500/15 text-red-400 border-red-500/30",
   };
   const labels = {
-    pending:  'Pending',
-    selected: 'Selected ✓',
-    rejected: 'Rejected',
+    pending:  "Pending",
+    selected: "Selected ✓",
+    rejected: "Rejected",
   };
-  const cls = styles[status] ?? 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+  const cls = styles[status] ?? "bg-slate-500/15 text-slate-400 border-slate-500/30";
   return (
-    <span
-      className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${cls}`}
-    >
+    <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${cls}`}>
       {labels[status] ?? status}
     </span>
   );

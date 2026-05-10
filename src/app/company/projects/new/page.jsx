@@ -10,6 +10,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PostProjectForm from '@/components/PostProjectForm'
+import DashboardShell from '@/components/layout/DashboardShell'
 
 export const metadata = {
   title: 'Post a Project — KaajerBazar',
@@ -29,7 +30,7 @@ export default async function PostProjectPage() {
   // ─── Guard 2: Role ─────────────────────────────────────────
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('role')
+    .select('role, full_name')
     .eq('id', user.id)
     .single()
 
@@ -45,22 +46,12 @@ export default async function PostProjectPage() {
   const isVerified = companyProfile?.verification_status === 'verified'
 
   return (
-    <div className="gradient-brand min-h-screen">
-      {/* ── Header ── */}
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <Link
-          href="/company/dashboard"
-          className="text-slate-400 hover:text-white transition-colors text-sm flex items-center gap-2"
-        >
-          ← Back to Dashboard
-        </Link>
-        <span className="text-white font-bold text-lg">কাজের বাজার</span>
-        <span className="text-slate-400 text-sm hidden sm:block">
-          {companyProfile?.legal_name}
-        </span>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-6 py-10">
+    <DashboardShell
+      role="company"
+      fullName={companyProfile?.legal_name ?? profile?.full_name ?? ""}
+      activePath="/company/projects/new"
+    >
+      <div className="max-w-3xl mx-auto px-6 py-10">
         {/* ── Page Title ── */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white mb-1">Post a Micro-Project</h1>
@@ -106,9 +97,11 @@ export default async function PostProjectPage() {
           </div>
         ) : (
           /* ── The actual form ── */
-          <PostProjectForm />
+          <div className="glass rounded-xl p-6">
+            <PostProjectForm />
+          </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardShell>
   )
 }

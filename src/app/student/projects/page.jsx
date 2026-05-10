@@ -4,8 +4,8 @@
 
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import ProjectBrowser from '@/components/ProjectBrowser'
+import DashboardShell from '@/components/layout/DashboardShell'
 
 export const metadata = {
   title: 'Browse Projects — KaajerBazar',
@@ -28,8 +28,7 @@ export default async function StudentProjectsPage() {
 
   if (profile?.role !== 'student') redirect('/unauthorized')
 
-  // Fetch all open projects (RLS: authenticated_read_open_projects allows this)
-  // Join company_profiles to get legal_name for each card
+  // Fetch all open projects
   const { data: projects } = await supabase
     .from('projects')
     .select(`
@@ -45,7 +44,7 @@ export default async function StudentProjectsPage() {
     .eq('status', 'open')
     .order('created_at', { ascending: false })
 
-  // Fetch this student's existing applications (to pre-populate "Applied" state)
+  // Fetch this student's existing applications
   const { data: myApplications } = await supabase
     .from('applications')
     .select('project_id')
@@ -54,31 +53,12 @@ export default async function StudentProjectsPage() {
   const appliedIds = (myApplications ?? []).map((a) => a.project_id)
 
   return (
-    <div className="gradient-brand min-h-screen">
-      {/* Header */}
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-bold text-lg">কাজের বাজার</span>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/student/dashboard"
-            className="text-slate-400 hover:text-white text-sm transition-colors"
-          >
-            ← Dashboard
-          </Link>
-          <span className="text-slate-400 text-sm">{profile?.full_name}</span>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="text-xs text-slate-400 hover:text-red-400 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
-            >
-              Logout
-            </button>
-          </form>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <DashboardShell
+      role="student"
+      fullName={profile?.full_name ?? ""}
+      activePath="/student/projects"
+    >
+      <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Page title */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white mb-1">Browse Projects</h1>
@@ -87,7 +67,7 @@ export default async function StudentProjectsPage() {
           </p>
         </div>
 
-        {/* Empty state (no open projects at all) */}
+        {/* Empty state */}
         {(!projects || projects.length === 0) ? (
           <div className="glass rounded-xl p-10 text-center">
             <p className="text-4xl mb-4">📭</p>
@@ -102,7 +82,7 @@ export default async function StudentProjectsPage() {
             appliedIds={appliedIds}
           />
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardShell>
   )
 }

@@ -80,9 +80,9 @@ export default function SkillReviewQueue({ submissions: initialSubmissions }) {
         const isExpanded  = expanded  === sub.id
         const isLoading   = loading   === sub.id
         const isDownloading = downloading === sub.id
-        const studentName = sub.student_profiles?.users_profiles?.full_name || 'Unknown Student'
-        const username    = sub.student_profiles?.username    || '—'
-        const university  = sub.student_profiles?.university  || 'Not specified'
+        const studentName = (sub.users_profiles?.full_name || sub.student_profiles?.users_profiles?.full_name) || 'Unknown Student'
+        const username    = (sub.student_profiles?.username) || '—'
+        const university  = (sub.student_profiles?.university) || 'Not specified'
         const hasFile     = Boolean(sub.submission_file_url)
 
         return (

@@ -1,105 +1,185 @@
-"use client";
+'use client'
 
 // src/app/(auth)/login/page.jsx
-// Member B owns this file.
-//
-// Styles: uses .gradient-brand and .glass from globals.css
-// Form input: uses <FormInput> from @/components/ui/FormInput
+// Phase F: Split-screen layout — left brand panel + right form.
+// Framer Motion: form fields stagger-fade-in on mount.
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase";
-import FormInput from "@/components/ui/FormInput";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase'
+import { Mail, Lock, ArrowRight } from 'lucide-react'
 
-// Role → dashboard path mapping. Update here if routes change.
 const ROLE_DASHBOARD = {
-  student: "/student/dashboard",
-  company: "/company/dashboard",
-  admin: "/admin/dashboard",
-};
+  student: '/student/dashboard',
+  company: '/company/dashboard',
+  admin:   '/admin/dashboard',
+}
 
+// ── Framer Motion variants ──────────────────────────────────────────────────────
+const containerVariants = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
+}
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+}
+
+// ── Brand panel (left side) ────────────────────────────────────────────────────
+function BrandPanel() {
+  return (
+    <div className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
+         style={{ background: 'linear-gradient(145deg, hsl(267 60% 12%) 0%, hsl(222 47% 8%) 60%, hsl(267 50% 18%) 100%)' }}>
+
+      {/* Background orbs */}
+      <div aria-hidden className="absolute -top-24 -left-24 w-80 h-80 rounded-full opacity-20 pointer-events-none"
+           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 9s ease-in-out infinite' }} />
+      <div aria-hidden className="absolute -bottom-20 -right-16 w-64 h-64 rounded-full opacity-15 pointer-events-none"
+           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 11s ease-in-out infinite reverse' }} />
+
+      {/* Geometric SVG decoration */}
+      <svg aria-hidden className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center text-center px-10">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+        >
+          {/* Logo mark */}
+          <div className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-6 mx-auto"
+               style={{ boxShadow: '0 0 32px hsl(267 84% 61% / 0.3)' }}>
+            <span className="text-2xl font-extrabold text-purple-300">ক</span>
+          </div>
+
+          <h2 className="text-3xl font-extrabold text-white mb-3 leading-tight">
+            কাজের <span className="gradient-text">বাজার</span>
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+            Bangladesh&apos;s premier platform connecting verified university students with SME micro-projects.
+          </p>
+        </motion.div>
+
+        {/* Feature pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-10 flex flex-col gap-3 w-full max-w-xs"
+        >
+          {[
+            { emoji: '🎯', text: 'AI-verified skill badges' },
+            { emoji: '🔒', text: 'Secure escrow payments'  },
+            { emoji: '🚀', text: 'Real-world portfolio'    },
+          ].map(({ emoji, text }) => (
+            <div key={text} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/8">
+              <span className="text-lg">{emoji}</span>
+              <span className="text-slate-300 text-sm">{text}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ──────────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const [email, setEmail]               = useState('')
+  const [password, setPassword]         = useState('')
+  const [loading, setLoading]           = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError]               = useState('')
 
   async function handleLogin(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-    const supabase = createClient();
-
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const supabase = createClient()
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
+      setError(authError.message)
+      setLoading(false)
+      return
     }
 
-    // Fetch role to redirect to the correct dashboard
     const { data: profile } = await supabase
-      .from("users_profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
+      .from('users_profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
 
-    router.push(ROLE_DASHBOARD[profile?.role] ?? "/");
-    router.refresh();
+    router.push(ROLE_DASHBOARD[profile?.role] ?? '/')
+    router.refresh()
   }
 
   async function handleGoogleLogin() {
-    setGoogleLoading(true);
-    setError("");
-    const supabase = createClient();
+    setGoogleLoading(true)
+    setError('')
+    const supabase = createClient()
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
+      provider: 'google',
+      options:  { redirectTo: `${window.location.origin}/api/auth/callback` },
+    })
     if (oauthError) {
-      setError(oauthError.message);
-      setGoogleLoading(false);
+      setError(oauthError.message)
+      setGoogleLoading(false)
     }
-    // On success, the browser redirects automatically — no need to do anything here
   }
 
   return (
-    <div className="gradient-brand min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Brand logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">কাজের বাজার</h1>
-          <p className="text-purple-300 mt-1 text-sm">
-            KaajerBazar — Work Marketplace
-          </p>
-        </div>
+    <div className="min-h-screen flex" style={{ backgroundColor: 'hsl(var(--kb-surface-900))' }}>
+      <BrandPanel />
 
-        {/* Auth card */}
-        <div className="glass rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-white mb-6">
-            Sign in to your account
-          </h2>
+      {/* ── Right: Form panel ── */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="w-full max-w-md"
+        >
+          {/* Mobile brand header (only shown when brand panel is hidden) */}
+          <motion.div variants={itemVariants} className="text-center mb-8 lg:hidden">
+            <h1 className="text-2xl font-bold text-white">কাজের বাজার</h1>
+            <p className="text-purple-300 mt-1 text-sm">KaajerBazar — Work Marketplace</p>
+          </motion.div>
 
-          {/* Inline error — uses badge-error from globals.css */}
-          {error && <p className="badge-error block mb-4 p-3">{error}</p>}
+          <motion.div variants={itemVariants}>
+            <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
+            <p className="text-slate-400 text-sm mb-8">Sign in to your account to continue.</p>
+          </motion.div>
+
+          {/* Error */}
+          {error && (
+            <motion.p variants={itemVariants} className="badge-error block mb-5 p-3 text-sm">
+              {error}
+            </motion.p>
+          )}
 
           {/* Google Sign In */}
-          <button
+          <motion.button
+            variants={itemVariants}
             id="google-login"
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading || loading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 font-semibold py-2.5 rounded-lg transition-colors text-sm mb-4 shadow-sm"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm mb-5 shadow-sm"
           >
             {googleLoading ? (
               <span className="text-gray-500">Redirecting to Google…</span>
@@ -109,61 +189,86 @@ export default function LoginPage() {
                 Continue with Google
               </>
             )}
-          </button>
+          </motion.button>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 mb-4">
+          <motion.div variants={itemVariants} className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-white/10" />
             <span className="text-slate-500 text-xs">or sign in with email</span>
             <div className="flex-1 h-px bg-white/10" />
-          </div>
+          </motion.div>
 
+          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
-            <FormInput
-              id="email"
-              type="email"
-              label="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-            <FormInput
-              id="password"
-              type="password"
-              label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
+            <motion.div variants={itemVariants}>
+              <label htmlFor="email" className="block text-slate-300 text-sm mb-1.5">Email address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="kb-input w-full pl-10 text-sm"
+                />
+              </div>
+            </motion.div>
 
-            <button
-              id="login-submit"
-              type="submit"
-              disabled={loading || googleLoading}
-              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors text-sm mt-2"
-            >
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
+            <motion.div variants={itemVariants}>
+              <label htmlFor="password" className="block text-slate-300 text-sm mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="kb-input w-full pl-10 text-sm"
+                />
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <motion.button
+                id="login-submit"
+                type="submit"
+                disabled={loading || googleLoading}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full kb-btn-primary disabled:opacity-50 disabled:cursor-not-allowed font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    Sign in
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
           </form>
 
-          <p className="text-center text-slate-400 text-sm mt-6">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-purple-400 hover:text-purple-300 font-medium"
-            >
+          <motion.p variants={itemVariants} className="text-center text-slate-400 text-sm mt-6">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
               Register here
             </Link>
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </div>
     </div>
-  );
+  )
 }
 
-// Google "G" SVG icon
+// ── Google "G" icon ────────────────────────────────────────────────────────────
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">

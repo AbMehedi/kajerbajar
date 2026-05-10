@@ -36,8 +36,15 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Project not found or access denied' }, { status: 403 })
     }
 
+    // Parse pagination params
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const validPage = Math.max(1, page)
+    const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 per page
+    const offset = (validPage - 1) * validLimit
+
     // ⚡ Step 1: Fetch applications for this project
-    const { data: applications, error } = await supabase
+    const { data: applications, error, count } = await supabase
       .from('applications')
       .select(`
         id,
@@ -52,9 +59,10 @@ export async function GET(request) {
           kaajerscore,
           users_profiles ( full_name, email )
         )
-      `)
+      `, { count: 'exact' })
       .eq('project_id', projectId)
       .order('created_at', { ascending: true })
+      .range(offset, offset + validLimit - 1)
 
     if (error) {
       console.error('[company/applications GET] DB error:', error)
@@ -94,7 +102,15 @@ export async function GET(request) {
       verified_skills: badgeMap[app.student_id] ?? [],
     }))
 
-    return NextResponse.json({ applications: enriched })
+    return NextResponse.json({
+      applications: enriched,
+      pagination: {
+        page: validPage,
+        limit: validLimit,
+        total: count,
+        pages: Math.ceil((count || 0) / validLimit),
+      },
+    })
   } catch (err) {
     console.error('[company/applications GET] Unexpected error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

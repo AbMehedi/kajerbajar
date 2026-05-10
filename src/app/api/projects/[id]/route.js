@@ -19,6 +19,21 @@ export async function GET(request, { params }) {
     .single()
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      )
+    }
+
+    console.error('[projects GET] DB error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch project' },
+      { status: 500 }
+    )
+  }
+
+  if (!data) {
     return NextResponse.json(
       { error: 'Project not found' },
       { status: 404 }

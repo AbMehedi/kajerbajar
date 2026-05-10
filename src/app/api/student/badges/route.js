@@ -11,14 +11,18 @@ export async function GET(request) {
 
     const { supabase, user } = auth
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') || 'approved'
+    const status = searchParams.get('status')
+
+    // Badges only represent approved skills; return empty for other statuses.
+    if (status && status !== 'approved') {
+      return NextResponse.json({ badges: [] })
+    }
 
     const { data: badges, error } = await supabase
-      .from('skill_verifications')
-      .select('id, skill_category, status, verified_by, created_at, updated_at')
+      .from('badges')
+      .select('id, skill_name, verification_id, granted_at, granted_by')
       .eq('student_id', user.id)
-      .eq('status', status)
-      .order('created_at', { ascending: false })
+      .order('granted_at', { ascending: false })
 
     if (error) {
       console.error('[student/badges GET] DB error:', error)

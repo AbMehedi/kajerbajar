@@ -39,21 +39,25 @@ $$ LANGUAGE SQL STABLE;
 
 -- Step 3: RLS Policies for Storage Bucket (trade-licenses)
 -- NOTE: Create bucket first in Supabase Dashboard → Storage → Create Bucket
+-- (CREATE POLICY IF NOT EXISTS is not valid SQL; use DROP + CREATE instead)
 
 -- Allow authenticated users to upload their own licenses
-CREATE POLICY IF NOT EXISTS "Users can upload trade licenses"
+DROP POLICY IF EXISTS "Users can upload trade licenses" ON storage.objects;
+CREATE POLICY "Users can upload trade licenses"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'trade-licenses');
 
 -- Allow authenticated users to read trade licenses
-CREATE POLICY IF NOT EXISTS "Users can view trade licenses"
+DROP POLICY IF EXISTS "Users can view trade licenses" ON storage.objects;
+CREATE POLICY "Users can view trade licenses"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'trade-licenses');
 
 -- Step 4: RLS Policy for Admins to Update Company Verification
-CREATE POLICY IF NOT EXISTS "Admins can update company profiles"
+DROP POLICY IF EXISTS "Admins can update company profiles" ON company_profiles;
+CREATE POLICY "Admins can update company profiles"
 ON company_profiles FOR UPDATE
 TO authenticated
 USING (

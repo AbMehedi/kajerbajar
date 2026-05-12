@@ -27,6 +27,30 @@ function StatusBadge({ status }) {
   )
 }
 
+// ── AI Match Score Badge ────────────────────────────────────────────────────────
+function MatchScoreBadge({ score }) {
+  if (score === null || score === undefined) return null
+
+  const s = Number(score)
+  const color =
+    s >= 8
+      ? 'bg-green-500/15 text-green-400 border-green-500/30'
+      : s >= 5
+      ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
+      : 'bg-red-500/15 text-red-400 border-red-500/30'
+
+  const icon = s >= 8 ? '🎯' : s >= 5 ? '🔶' : '🔻'
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${color}`}
+      title={`AI Match Score: ${s.toFixed(1)}/10`}
+    >
+      {icon} {s.toFixed(1)}/10
+    </span>
+  )
+}
+
 function ProjectStatusBadge({ status }) {
   const map = {
     open:       { cls: 'bg-green-500/15  text-green-400  border-green-500/30',  label: 'Open' },
@@ -68,6 +92,7 @@ function ApplicantCard({ app, onAction, actionLoading }) {
               {name}
             </p>
             <StatusBadge status={app.status} />
+            <MatchScoreBadge score={app.ai_match_score} />
           </div>
           <p className="text-slate-500 text-xs">@{username} · {university}</p>
 
@@ -125,6 +150,19 @@ function ApplicantCard({ app, onAction, actionLoading }) {
               >
                 {app.portfolio_item_url}
               </a>
+            </div>
+          )}
+
+          {/* AI Match Reason */}
+          {app.ai_match_reason && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                🤖 AI Match Insight
+              </p>
+              <div className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
+                <MatchScoreBadge score={app.ai_match_score} />
+                <p className="text-slate-300 text-xs leading-relaxed">{app.ai_match_reason}</p>
+              </div>
             </div>
           )}
 

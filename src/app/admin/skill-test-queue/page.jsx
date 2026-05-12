@@ -1,5 +1,5 @@
 // src/app/admin/skill-test-queue/page.jsx
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import SkillReviewQueue from "../dashboard/SkillReviewQueue";
@@ -25,7 +25,11 @@ export default async function AdminSkillQueue() {
 
   if (profile?.role !== "admin") redirect("/unauthorized");
 
-  const { data: pendingSkills } = await supabase
+  // Use admin client (service role) to bypass RLS — the skill_verifications admin
+  // RLS policy requires migration_003 which may not have been applied yet.
+  const adminSupabase = await createAdminSupabaseClient();
+
+  const { data: pendingSkills, error: skillsError } = await adminSupabase
     .from("skill_verifications")
     .select(`
       id,
@@ -34,14 +38,23 @@ export default async function AdminSkillQueue() {
       ai_brief,
       submission_text,
       submission_file_url,
-      submitted_at,
       created_at,
       student_id,
-      users_profiles!skill_verifications_student_id_fkey (full_name, email),
-      student_profiles!skill_verifications_student_id_fkey (username, university)
+      student_profiles (
+        username,
+        university,
+        users_profiles ( full_name, email )
+      )
     `)
-    .eq("status", "submitted")
-    .order("submitted_at", { ascending: true });
+    // Exclude already-reviewed records; require submission content.
+    .not("status", "in", '("approved","rejected","revision_requested")')
+    .or("submission_text.not.is.null,submission_file_url.not.is.null")
+    .order("created_at", { ascending: true });
+
+  if (skillsError) {
+    console.error("[admin/skill-test-queue] DB error:", skillsError);
+  }
+
 
   return (
     <DashboardShell

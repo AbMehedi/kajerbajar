@@ -35,14 +35,14 @@ _Goal: Allow students to prove their expertise using AI-driven verification._
 - [x] **Skills Display**: `SkillBadges.jsx` — approved verifications render as green skill badges on the student dashboard.
 - [x] **Badge Granting**: On Admin Approve, a record is upserted to the `badges` table via the service-role client.
 
-### Phase 3: Project Marketplace ⚪ (Upcoming)
+### Phase 3: Project Marketplace 🟢 (Completed)
 
 _Goal: Enable companies to post work and students to apply._
 
-- [ ] **Project Posting Flow**: Company interface to create projects with budget, duration, and required skills.
-- [ ] **Project Discovery**: Student view to browse and filter open projects.
-- [ ] **AI-Powered Matching**: Calculate "Match Score" between student skills and project requirements.
-- [ ] **Application System**: Students can apply with cover notes; companies can review and select candidates.
+- [x] **Project Posting Flow**: Company interface to create projects with budget, duration, and required skills. (`POST /api/projects`)
+- [x] **Project Discovery**: Student view to browse and filter open projects. (`/student/projects`)
+- [x] **AI-Powered Matching**: Calculate "Match Score" between student skills and project requirements. (`calculateMatchScore` in `ai.js`, stored in `applications`)
+- [x] **Application System**: Students can apply with cover notes; companies can review and select candidates. (`/api/applications` and `/api/company/applications`)
 
 ### Phase 4: Escrow & Project Execution ⚪ (Upcoming)
 
@@ -80,12 +80,14 @@ _Goal: Final refinements for production readiness._
 | T002    | ~~Supabase Storage for Skill Files~~                 | ✅ Done | —        |
 | T003    | ~~Admin Skill Review Dashboard~~                     | ✅ Done | —        |
 | T004    | ~~AI Brief Generation (Groq/Llama 3)~~               | ✅ Done | —        |
-| T005    | Company: Project Creation Form                       | To Do  | High     |
-| T006    | Student: Project Discovery & Browse page             | To Do  | High     |
-| T007    | AI Match Score between student skills & project      | To Do  | Medium   |
-| T008    | Application System (student apply, company select)   | To Do  | High     |
+| T005    | ~~Company: Project Creation Form~~                   | ✅ Done | —        |
+| T006    | ~~Student: Project Discovery & Browse page~~         | ✅ Done | —        |
+| T007.1  | ~~Implement `calculateMatchScore` in `ai.js`~~       | ✅ Done | —        |
+| T007.2  | ~~Integrate AI scoring into `POST /api/applications`~~| ✅ Done | —        |
+| T007.3  | ~~Display Match Score in Company `ApplicationsPanel`~~| ✅ Done | —        |
+| T008    | ~~Application System (student apply, company select)~~ | ✅ Done | —        |
 
 ---
 
 > [!NOTE]
-> **Phase 2 is fully complete.** Next up is Phase 3 — the Project Marketplace. Start with T005 (Company Project Creation).
+> **Phase 3 is fully complete.** Marketplace features (posting, discovery, AI matching) are verified. Admin queues are restored and bypass RLS constraints for stability. Next: **Phase 4 — Escrow & Project Execution**.

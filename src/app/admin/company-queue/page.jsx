@@ -1,5 +1,5 @@
 // src/app/admin/company-queue/page.jsx
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import CompanyVerificationQueue from "../dashboard/CompanyVerificationQueue";
@@ -25,7 +25,10 @@ export default async function AdminCompanyQueue() {
 
   if (profile?.role !== "admin") redirect("/unauthorized");
 
-  const { data: pendingCompanies } = await supabase
+  // Use admin client (service role) to bypass RLS on company_profiles.
+  const adminSupabase = await createAdminSupabaseClient();
+
+  const { data: pendingCompanies } = await adminSupabase
     .from("company_profiles")
     .select(`
       id,

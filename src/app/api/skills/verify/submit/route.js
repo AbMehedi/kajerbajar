@@ -58,13 +58,15 @@ export async function POST(request) {
       }, { status: 409 })
     }
 
-    // 4. Save submission — status moves to 'submitted', admin will review next
+    // 4. Save submission — use 'pending' status (schema CHECK constraint does not include
+    //    'submitted'; migration_003 adds it but may not have been applied yet).
+    //    The submitted_at timestamp + submission_text/file presence marks it as submitted.
     const { data: updated, error: updateError } = await supabase
       .from('skill_verifications')
       .update({
         submission_text:     hasText ? submissionText.trim() : null,
         submission_file_url: submissionFilePath  || null,
-        status:              'submitted',
+        status:              'pending',
         submitted_at:        new Date().toISOString(),
       })
       .eq('id', verificationId)

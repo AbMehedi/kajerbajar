@@ -51,6 +51,8 @@ export async function GET(request) {
         status,
         cover_note,
         portfolio_item_url,
+        ai_match_score,
+        ai_match_reason,
         created_at,
         student_id,
         student_profiles (

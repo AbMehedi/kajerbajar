@@ -1,15 +1,18 @@
 'use client'
 
 // src/app/company/dashboard/ApplicationsPanel.jsx
-// Phase 3 — Full applicant management panel for company dashboard.
+// Phase 3 & 4 — Full applicant management panel for company dashboard.
 //
 // UX Flow:
 //   1. Loads company projects from GET /api/company/projects
 //   2. Click a project → loads its applicants from GET /api/company/applications?projectId=...
 //   3. Per applicant: view profile card + cover letter, then Accept or Reject
 //   4. PATCH /api/company/applications to update status optimistically
+//   5. Phase 4: "Start Project" button locks escrow → redirects to workspace
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +69,7 @@ function ProjectStatusBadge({ status }) {
 }
 
 // ── Applicant Card ─────────────────────────────────────────────────────────────
-function ApplicantCard({ app, onAction, actionLoading }) {
+function ApplicantCard({ app, onAction, actionLoading, canStart, onStartProject, startLoading, startError }) {
   const [expanded, setExpanded] = useState(false)
   const student = app.student_profiles
   const name = student?.users_profiles?.full_name ?? 'Unknown Student'
@@ -197,6 +200,34 @@ function ApplicantCard({ app, onAction, actionLoading }) {
               </button>
             </div>
           )}
+
+          {/* Phase 4: Start Project Banner (shown if accepted and ready to start) */}
+          {isResolved && app.status === 'selected' && canStart && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-green-400 font-semibold mb-1">Applicant Accepted</h4>
+                  <p className="text-slate-400 text-sm">Lock the budget into escrow to officially begin working together.</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <button
+                    id={`start-project-${app.project_id}`}
+                    onClick={(e) => { e.stopPropagation(); onStartProject() }}
+                    disabled={startLoading}
+                    className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors w-full sm:w-auto"
+                  >
+                    {startLoading ? (
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : '🔒'}
+                    {startLoading ? 'Starting Project…' : 'Start Project & Lock Escrow'}
+                  </button>
+                  {startError && (
+                    <p className="text-red-400 text-xs text-center w-full">{startError}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -204,11 +235,15 @@ function ApplicantCard({ app, onAction, actionLoading }) {
 }
 
 // ── Applicant List ─────────────────────────────────────────────────────────────
-function ApplicantList({ projectId, projectTitle }) {
+function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus }) {
+  const router = useRouter()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(null) // applicationId being processed
+  const [startLoading, setStartLoading] = useState(false)
+  const [startError, setStartError] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
 
   useEffect(() => {
     async function fetchApplicants() {
@@ -227,6 +262,26 @@ function ApplicantList({ projectId, projectTitle }) {
     }
     fetchApplicants()
   }, [projectId])
+
+  async function handleStartProject() {
+    setShowConfirm(true)
+  }
+
+  async function executeStartProject() {
+    setShowConfirm(false)
+    setStartLoading(true)
+    setStartError('')
+    try {
+      const res = await fetch(`/api/projects/${projectId}/start`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setStartError(data.error || 'Failed to start project.'); return }
+      router.push(`/company/workspace/${projectId}`)
+    } catch {
+      setStartError('Network error. Please try again.')
+    } finally {
+      setStartLoading(false)
+    }
+  }
 
   async function handleAction(applicationId, action) {
     setActionLoading(applicationId)
@@ -266,6 +321,9 @@ function ApplicantList({ projectId, projectTitle }) {
 
   const pending = applications.filter((a) => a.status === 'pending')
   const resolved = applications.filter((a) => a.status !== 'pending')
+  const hasSelected = applications.some((a) => a.status === 'selected')
+  const hasStarted = projectStatus === 'in_progress' || projectStatus === 'completed'
+  const canStart = hasSelected && projectStatus === 'open' && escrowStatus !== 'held'
 
   if (applications.length === 0) {
     return (
@@ -279,15 +337,27 @@ function ApplicantList({ projectId, projectTitle }) {
 
   return (
     <div className="space-y-5">
-      {/* Summary row */}
-      <div className="flex items-center gap-4 text-xs text-slate-500">
-        <span>{applications.length} total applicant{applications.length !== 1 ? 's' : ''}</span>
-        {pending.length > 0 && (
-          <span className="text-yellow-400 font-semibold">{pending.length} awaiting review</span>
-        )}
-        {resolved.length > 0 && (
-          <span>{resolved.length} reviewed</span>
-        )}
+      {/* Summary row + actions */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-4 text-xs text-slate-500">
+          <span>{applications.length} total applicant{applications.length !== 1 ? 's' : ''}</span>
+          {pending.length > 0 && (
+            <span className="text-yellow-400 font-semibold">{pending.length} awaiting review</span>
+          )}
+          {resolved.length > 0 && (
+            <span>{resolved.length} reviewed</span>
+          )}
+        </div>
+
+        {/* Phase 4: Project start / workspace actions */}
+        {hasStarted ? (
+          <Link
+            href={`/company/workspace/${projectId}`}
+            className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            🚀 Go to Workspace
+          </Link>
+        ) : null}
       </div>
 
       {/* Pending applicants first */}
@@ -319,8 +389,38 @@ function ApplicantList({ projectId, projectTitle }) {
               app={app}
               onAction={handleAction}
               actionLoading={actionLoading}
+              canStart={canStart}
+              onStartProject={handleStartProject}
+              startLoading={startLoading}
+              startError={startError}
             />
           ))}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-white mb-2">Start Project?</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              This will officially begin the project and lock the budget into escrow. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-lg font-medium text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeStartProject}
+                className="px-4 py-2 rounded-lg font-medium text-sm bg-green-600 hover:bg-green-500 text-white transition-colors shadow-lg shadow-green-900/20"
+              >
+                Yes, Start Project
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -435,6 +535,8 @@ export default function ApplicationsPanel() {
                 key={selectedProject.id}
                 projectId={selectedProject.id}
                 projectTitle={selectedProject.title}
+                projectStatus={selectedProject.status}
+                escrowStatus={selectedProject.escrow_status}
               />
             </>
           ) : (

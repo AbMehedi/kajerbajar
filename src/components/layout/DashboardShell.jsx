@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Building2,
   ShieldCheck,
+  FolderKanban,
 } from 'lucide-react'
 import LogoutButton from '@/components/LogoutButton'
 import MobileSidebarDrawer from './MobileSidebarDrawer'
@@ -23,10 +24,12 @@ const NAV_ITEMS = {
     { href: '/student/dashboard',  label: 'Dashboard',      icon: Home           },
     { href: '/student/projects',   label: 'Browse Projects', icon: Search         },
     { href: '/student/skill-test', label: 'Skill Tests',     icon: GraduationCap  },
+    { href: '/student/workspace',  label: 'Workspace',       icon: FolderKanban   },
   ],
   company: [
-    { href: '/company/dashboard',    label: 'Dashboard',   icon: Home     },
-    { href: '/company/projects/new', label: 'Post Project', icon: Briefcase },
+    { href: '/company/dashboard',    label: 'Dashboard',   icon: Home          },
+    { href: '/company/projects/new', label: 'Post Project', icon: Briefcase     },
+    { href: '/company/workspace',    label: 'Workspace',    icon: FolderKanban  },
   ],
   admin: [
     { href: '/admin/dashboard',        label: 'Dashboard',     icon: Home        },

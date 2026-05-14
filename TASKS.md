@@ -44,50 +44,48 @@ _Goal: Enable companies to post work and students to apply._
 - [x] **AI-Powered Matching**: Calculate "Match Score" between student skills and project requirements. (`calculateMatchScore` in `ai.js`, stored in `applications`)
 - [x] **Application System**: Students can apply with cover notes; companies can review and select candidates. (`/api/applications` and `/api/company/applications`)
 
-### Phase 4: Escrow & Project Execution ⚪ (Upcoming)
+### Phase 4: Escrow & Project Execution 🟢 (Completed)
 
 _Goal: Secure payments and manage active work._
 
-- [ ] **Escrow Deposit**: Companies deposit funds into the platform ledger before work starts.
-- [ ] **Active Workspace**: A shared view for students and companies to track project progress.
-- [ ] **Milestone Submission**: Student submits deliverables for company review.
-- [ ] **Payment Release**: Logic to transfer funds from Escrow to Student Wallet upon approval.
+- [x] **Database Setup**: Create `project_deliverables` table and `project-deliverables` storage bucket.
+- [x] **Escrow Deposit**: Companies deposit funds into the platform ledger before work starts. (`POST /api/projects/[id]/start`)
+- [x] **Student Workspace Hub**: Project list page grouped by status + per-project workspace. (`/student/workspace`, `/student/workspace/[id]`)
+- [x] **Company Workspace Hub**: Project list page grouped by status + per-project workspace. (`/company/workspace`, `/company/workspace/[id]`)
+- [x] **Payment Release**: Logic to transfer funds from Escrow to Student Wallet upon approval. (`POST /api/projects/[id]/release`)
 
-### Phase 5: Certification & Reputation ⚪ (Upcoming)
+### Phase 5: Communication, Certification & Reputation ⏳ (Current Phase)
 
-_Goal: Build long-term value for students._
+_Goal: Build long-term value for students and facilitate project collaboration._
 
+- [x] **Workspace Messaging**: Real-time chat between students and companies inside project workspaces.
+- [x] **Review System**: Mutual double-blind 1-5 star reviews between students and companies upon payment release.
+- [x] **KaajerScore Profile Integration**: Display the average star rating and reviews on the student's profile.
 - [ ] **Automated Certificates**: Generate PDF certificates for successfully completed projects.
-- [ ] **KaajerScore Algorithm**: Reputation system based on completion rate, reviews, and skill levels.
-- [ ] **Review System**: Mutual reviews between students and companies after project completion.
 
 ### Phase 6: Final Polish & Launch ⚪ (Upcoming)
 
 _Goal: Final refinements for production readiness._
 
 - [ ] **Real-time Notifications**: In-app and email alerts for applications and payments.
-- [ ] **Messaging System**: Basic chat between students and companies for active projects.
 - [ ] **SEO & Performance**: Metadata optimization and image compression.
 - [ ] **Deployment**: Production setup on Vercel.
 
 ---
 
-## 🛠️ Current Task List (Phase 3 Focus)
+## 🛠️ Current Task List (Phase 5 Focus)
 
 | Task ID | Description                                          | Status | Priority |
 | :------ | :--------------------------------------------------- | :----- | :------- |
-| T001    | ~~Student Profile Edit page~~                        | ✅ Done | —        |
-| T002    | ~~Supabase Storage for Skill Files~~                 | ✅ Done | —        |
-| T003    | ~~Admin Skill Review Dashboard~~                     | ✅ Done | —        |
-| T004    | ~~AI Brief Generation (Groq/Llama 3)~~               | ✅ Done | —        |
-| T005    | ~~Company: Project Creation Form~~                   | ✅ Done | —        |
-| T006    | ~~Student: Project Discovery & Browse page~~         | ✅ Done | —        |
-| T007.1  | ~~Implement `calculateMatchScore` in `ai.js`~~       | ✅ Done | —        |
-| T007.2  | ~~Integrate AI scoring into `POST /api/applications`~~| ✅ Done | —        |
-| T007.3  | ~~Display Match Score in Company `ApplicationsPanel`~~| ✅ Done | —        |
-| T008    | ~~Application System (student apply, company select)~~ | ✅ Done | —        |
+| T5.1    | Database Migration (`project_reviews`, `chat_messages`) | ✅ Done | High     |
+| T5.2    | Workspace Chat API (`/api/projects/[id]/chat`)       | ✅ Done | High     |
+| T5.3    | Workspace Chat UI (Supabase Realtime integration)    | ✅ Done | High     |
+| T5.4    | Double-Blind Review API (`/api/projects/[id]/review`)| ✅ Done | High     |
+| T5.5    | Workspace Review Form & UI Enforcement               | ✅ Done | High     |
+| T5.6    | Student Profile: KaajerScore & Archive display       | ✅ Done | Med      |
+| T5.7    | Automated Certificates generation (PDF)              | ⚪ Todo | Med      |
 
 ---
 
 > [!NOTE]
-> **Phase 3 is fully complete.** Marketplace features (posting, discovery, AI matching) are verified. Admin queues are restored and bypass RLS constraints for stability. Next: **Phase 4 — Escrow & Project Execution**.
+> **Currently working on Phase 5** — Wrapping up the final Phase 5 feature: Automated PDF Certificates for completed projects.

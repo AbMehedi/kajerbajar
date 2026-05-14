@@ -26,6 +26,7 @@ export async function GET() {
         budget_bdt,
         deadline,
         created_at,
+        escrow_status,
         applications ( count )
       `)
       .eq('company_id', user.id)

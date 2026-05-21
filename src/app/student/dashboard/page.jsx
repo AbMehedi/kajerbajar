@@ -85,8 +85,16 @@ export default async function StudentDashboard() {
           <StatCard
             icon={<Target className="w-5 h-5" />}
             label="KaajerScore"
-            value={(studentProfile?.kaajerscore ?? 0).toFixed(1)}
-            unit="/ 100"
+            value={
+              studentProfile?.kaajerscore !== null && studentProfile?.kaajerscore !== undefined
+                ? studentProfile.kaajerscore.toFixed(1)
+                : 'No score yet'
+            }
+            unit={
+              studentProfile?.kaajerscore !== null && studentProfile?.kaajerscore !== undefined
+                ? '/ 100'
+                : ''
+            }
             color="purple"
           />
           <StatCard

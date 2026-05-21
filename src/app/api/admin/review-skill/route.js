@@ -4,6 +4,7 @@
 
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
+import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
 
 const VALID_ACTIONS = ['approve', 'reject', 'revision']
@@ -88,6 +89,12 @@ export async function POST(request) {
         .eq('id', verificationId)
 
       if (updateError) throw updateError
+    }
+
+    // 6. Recalculate KaajerScore for the student (affects Component 1: Skill Verification Average)
+    // Only recalculate when a final decision is made (approve/reject), not on revision requests.
+    if (action === 'approve' || action === 'reject') {
+      await recalculateKaajerScore(verification.student_id)
     }
 
     return NextResponse.json({ success: true, action }, { status: 200 })

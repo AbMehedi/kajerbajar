@@ -54,38 +54,54 @@ _Goal: Secure payments and manage active work._
 - [x] **Company Workspace Hub**: Project list page grouped by status + per-project workspace. (`/company/workspace`, `/company/workspace/[id]`)
 - [x] **Payment Release**: Logic to transfer funds from Escrow to Student Wallet upon approval. (`POST /api/projects/[id]/release`)
 
-### Phase 5: Communication, Certification & Reputation ⏳ (Current Phase)
+### Phase 5: Communication, Certification & Reputation ✅ (Completed)
 
 _Goal: Build long-term value for students and facilitate project collaboration._
 
 - [x] **Workspace Messaging**: Real-time chat between students and companies inside project workspaces.
 - [x] **Review System**: Mutual double-blind 1-5 star reviews between students and companies upon payment release.
 - [x] **KaajerScore Profile Integration**: Display the average star rating and reviews on the student's profile.
-- [ ] **Automated Certificates**: Generate PDF certificates for successfully completed projects.
+- [x] **KaajerScore Reputation Engine & Overhaul**: Implement weighted trust score (30/50/20) + breakdown UI card + candidate sorting on company dashboard.
+- [x] **Automated Certificates**: Generate PDF certificates for successfully completed projects.
 
-### Phase 6: Final Polish & Launch ⚪ (Upcoming)
+### Phase 6: Final Polish & Launch 🔄 (Current Phase)
 
 _Goal: Final refinements for production readiness._
 
-- [ ] **Real-time Notifications**: In-app and email alerts for applications and payments.
-- [ ] **SEO & Performance**: Metadata optimization and image compression.
-- [ ] **Deployment**: Production setup on Vercel.
+- [ ] **Real-time Notifications (T6.1)**: In-app bell icon + unread badge count for new applications, messages, and payment events.
+- [ ] **Email Notifications (T6.2)**: Transactional emails via Supabase + Resend for key events.
+- [ ] **SEO & Performance (T6.3)**: `generateMetadata` on all pages, image optimisation, Open Graph tags.
+- [ ] **Mobile Responsiveness (T6.4)**: Audit and fix responsive layouts across all dashboards.
+- [ ] **Deployment (T6.5)**: Production setup on Vercel with environment variables and Supabase edge config.
 
 ---
 
 ## 🛠️ Current Task List (Phase 5 Focus)
 
-| Task ID | Description                                          | Status | Priority |
-| :------ | :--------------------------------------------------- | :----- | :------- |
-| T5.1    | Database Migration (`project_reviews`, `chat_messages`) | ✅ Done | High     |
-| T5.2    | Workspace Chat API (`/api/projects/[id]/chat`)       | ✅ Done | High     |
-| T5.3    | Workspace Chat UI (Supabase Realtime integration)    | ✅ Done | High     |
-| T5.4    | Double-Blind Review API (`/api/projects/[id]/review`)| ✅ Done | High     |
-| T5.5    | Workspace Review Form & UI Enforcement               | ✅ Done | High     |
-| T5.6    | Student Profile: KaajerScore & Archive display       | ✅ Done | Med      |
-| T5.7    | Automated Certificates generation (PDF)              | ⚪ Todo | Med      |
+| Task ID | Description                                                          | Status  | Priority |
+| :------ | :------------------------------------------------------------------- | :------ | :------- |
+| T5.1    | Database Migration (`project_reviews`, `chat_messages`)              | ✅ Done | High     |
+| T5.2    | Workspace Chat API (`/api/projects/[id]/chat`)                       | ✅ Done | High     |
+| T5.3    | Workspace Chat UI (Supabase Realtime integration)                    | ✅ Done | High     |
+| T5.4    | Double-Blind Review API (`/api/projects/[id]/review`)                | ✅ Done | High     |
+| T5.5    | Workspace Review Form & UI Enforcement                               | ✅ Done | High     |
+| T5.6    | Student Profile: KaajerScore & Archive display                       | ✅ Done | Med      |
+| T5.7    | Automated Certificates generation (PDF)                              | ✅ Done | Med      |
+| T5.8    | KaajerScore Overhaul (30/50/20 weighted formula) & Applicant Sorting | ✅ Done | High     |
+
+---
+
+## 🛠️ Current Task List (Phase 6 Focus)
+
+| Task ID | Description                                                         | Status | Priority |
+| :------ | :------------------------------------------------------------------ | :----- | :------- |
+| T6.1    | Real-time In-App Notifications (bell + badge)                       | ⚪ Todo | High     |
+| T6.2    | Email Notifications (Resend integration)                            | ⚪ Todo | Med      |
+| T6.3    | SEO & Metadata (`generateMetadata` on all pages)                    | ⚪ Todo | Med      |
+| T6.4    | Mobile Responsiveness audit & fixes                                 | ⚪ Todo | Med      |
+| T6.5    | Production Deployment on Vercel                                     | ⚪ Todo | High     |
 
 ---
 
 > [!NOTE]
-> **Currently working on Phase 5** — Wrapping up the final Phase 5 feature: Automated PDF Certificates for completed projects.
+> **Phase 5 is now complete!** All 8 tasks done. Now entering **Phase 6** — final polish and production deployment.

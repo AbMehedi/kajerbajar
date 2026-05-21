@@ -1,5 +1,4 @@
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
-import { calculateMatchScore } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 
 // Simple UUID-v4 shape check (Supabase UUIDs always match this pattern)
@@ -68,44 +67,7 @@ export async function POST(request) {
       )
     }
 
-    // ─── Step 3: Fetch data for AI matching ────────────────────────
-    // Run both queries in parallel — non-blocking for insert even if they fail
-    const [projectResult, skillsResult] = await Promise.allSettled([
-      supabase
-        .from('projects')
-        .select('required_skills')
-        .eq('id', project_id)
-        .single(),
-      supabase
-        .from('skill_verifications')
-        .select('skill_category')
-        .eq('student_id', user.id)
-        .eq('status', 'approved'),
-    ])
-
-    const projectSkills =
-      projectResult.status === 'fulfilled' && projectResult.value.data?.required_skills
-        ? projectResult.value.data.required_skills
-        : []
-
-    const studentSkills =
-      skillsResult.status === 'fulfilled' && skillsResult.value.data
-        ? skillsResult.value.data.map((r) => r.skill_category)
-        : []
-
-    // ─── Step 4: Compute AI Match Score (fire-and-catch) ───────────
-    let aiScore = null
-    let aiReason = null
-    try {
-      const match = await calculateMatchScore(studentSkills, projectSkills, cover_note.trim())
-      aiScore = match.score
-      aiReason = match.reason
-    } catch (aiErr) {
-      // AI error must NEVER block the application submission
-      console.warn('[applications POST] AI match score failed (non-fatal):', aiErr?.message)
-    }
-
-    // ─── Step 5: Insert application ────────────────────────────────
+    // ─── Step 3: Insert application ────────────────────────────────
     const insertPayload = {
       project_id,
       student_id: user.id,
@@ -115,11 +77,6 @@ export async function POST(request) {
 
     if (portfolio_item_url && typeof portfolio_item_url === 'string' && portfolio_item_url.trim()) {
       insertPayload.portfolio_item_url = portfolio_item_url.trim()
-    }
-
-    if (aiScore !== null) {
-      insertPayload.ai_match_score = aiScore
-      insertPayload.ai_match_reason = aiReason
     }
 
     const { data: newApplication, error: insertError } = await supabase
@@ -144,7 +101,7 @@ export async function POST(request) {
     }
 
     return NextResponse.json(
-      { application_id: newApplication.id, ai_match_score: aiScore },
+      { application_id: newApplication.id },
       { status: 201 }
     )
   } catch (err) {

@@ -3,6 +3,7 @@
 // Member A owns this file.
 
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function createServerSupabaseClient() {
@@ -52,5 +53,18 @@ export async function createAdminSupabaseClient() {
         },
       },
     }
+  )
+}
+
+// ─── Pure service-role client (NO cookies / user session) ───────────────────
+// Use this for privileged writes that must bypass RLS unconditionally,
+// e.g. recalculating KaajerScore on another user's student_profiles row.
+// createAdminSupabaseClient() reads cookies → acts as the logged-in user →
+// RLS applies → silent 0-row update. This client always uses the service role.
+export function createServiceRoleClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
   )
 }

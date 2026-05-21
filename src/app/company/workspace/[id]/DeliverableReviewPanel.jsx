@@ -326,7 +326,7 @@ export default function DeliverableReviewPanel({
             <div className="flex items-start gap-2 bg-yellow-500/8 border border-yellow-500/20 rounded-xl px-4 py-3 mb-4">
               <span className="text-yellow-400 shrink-0">⚠️</span>
               <p className="text-yellow-400 text-sm">
-                You haven't approved any deliverables yet. Review and approve the student's work first.
+                You haven&apos;t approved any deliverables yet. Review and approve the student&apos;s work first.
               </p>
             </div>
           )}

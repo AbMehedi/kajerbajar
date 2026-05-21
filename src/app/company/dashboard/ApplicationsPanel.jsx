@@ -30,29 +30,7 @@ function StatusBadge({ status }) {
   )
 }
 
-// ── AI Match Score Badge ────────────────────────────────────────────────────────
-function MatchScoreBadge({ score }) {
-  if (score === null || score === undefined) return null
 
-  const s = Number(score)
-  const color =
-    s >= 8
-      ? 'bg-green-500/15 text-green-400 border-green-500/30'
-      : s >= 5
-      ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
-      : 'bg-red-500/15 text-red-400 border-red-500/30'
-
-  const icon = s >= 8 ? '🎯' : s >= 5 ? '🔶' : '🔻'
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${color}`}
-      title={`AI Match Score: ${s.toFixed(1)}/10`}
-    >
-      {icon} {s.toFixed(1)}/10
-    </span>
-  )
-}
 
 function ProjectStatusBadge({ status }) {
   const map = {
@@ -68,14 +46,32 @@ function ProjectStatusBadge({ status }) {
   )
 }
 
+// ── Rank Medal Badge ───────────────────────────────────────────────────────────
+function RankBadge({ rank }) {
+  if (!rank || rank > 3) return (
+    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/8 text-slate-400 text-xs font-bold shrink-0">#{rank}</span>
+  )
+  const styles = [
+    'bg-yellow-400/20 text-yellow-300 border border-yellow-400/40', // #1 gold
+    'bg-slate-300/15 text-slate-200 border border-slate-300/30',    // #2 silver
+    'bg-orange-600/20 text-orange-300 border border-orange-500/35',  // #3 bronze
+  ]
+  const labels = ['🥇', '🥈', '🥉']
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${styles[rank - 1]}`}>
+      {labels[rank - 1]} #{rank}
+    </span>
+  )
+}
+
 // ── Applicant Card ─────────────────────────────────────────────────────────────
-function ApplicantCard({ app, onAction, actionLoading, canStart, onStartProject, startLoading, startError }) {
+function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartProject, startLoading, startError }) {
   const [expanded, setExpanded] = useState(false)
   const student = app.student_profiles
   const name = student?.users_profiles?.full_name ?? 'Unknown Student'
   const username = student?.username ?? '—'
   const university = student?.university ?? 'Not specified'
-  const score = student?.kaajerscore ?? 0
+  const score = student?.kaajerscore
   const skills = app.verified_skills ?? []
   const isLoading = actionLoading === app.id
   const isResolved = app.status !== 'pending'
@@ -91,18 +87,22 @@ function ApplicantCard({ app, onAction, actionLoading, canStart, onStartProject,
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            {rank && <RankBadge rank={rank} />}
             <p className={`font-semibold text-sm ${isResolved ? 'text-slate-400' : 'text-white'}`}>
               {name}
             </p>
             <StatusBadge status={app.status} />
-            <MatchScoreBadge score={app.ai_match_score} />
           </div>
           <p className="text-slate-500 text-xs">@{username} · {university}</p>
 
           {/* Score + skill badges */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <span className="text-xs text-purple-300 font-semibold bg-purple-500/15 border border-purple-500/25 px-2 py-0.5 rounded-md">
-              ⭐ KaajerScore {score.toFixed(1)}
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+              score !== null && score !== undefined
+                ? 'text-purple-300 bg-purple-500/15 border-purple-500/25'
+                : 'text-slate-500 bg-white/5 border-white/10'
+            }`}>
+              ⭐ {score !== null && score !== undefined ? `${score.toFixed(1)} / 100` : 'No score yet'}
             </span>
             {skills.slice(0, 3).map((s) => (
               <span key={s} className="text-xs bg-green-500/15 text-green-400 border border-green-500/25 px-2 py-0.5 rounded-md">
@@ -156,18 +156,7 @@ function ApplicantCard({ app, onAction, actionLoading, canStart, onStartProject,
             </div>
           )}
 
-          {/* AI Match Reason */}
-          {app.ai_match_reason && (
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                🤖 AI Match Insight
-              </p>
-              <div className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
-                <MatchScoreBadge score={app.ai_match_score} />
-                <p className="text-slate-300 text-xs leading-relaxed">{app.ai_match_reason}</p>
-              </div>
-            </div>
-          )}
+
 
           {/* Applied date */}
           <p className="text-slate-600 text-xs">
@@ -244,6 +233,7 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
   const [startLoading, setStartLoading] = useState(false)
   const [startError, setStartError] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
+  const [sortKey, setSortKey] = useState('kaajerscore') // 'date' | 'kaajerscore'
 
   useEffect(() => {
     async function fetchApplicants() {
@@ -319,8 +309,6 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
     return <p className="text-red-400 text-sm py-4">{error}</p>
   }
 
-  const pending = applications.filter((a) => a.status === 'pending')
-  const resolved = applications.filter((a) => a.status !== 'pending')
   const hasSelected = applications.some((a) => a.status === 'selected')
   const hasStarted = projectStatus === 'in_progress' || projectStatus === 'completed'
   const canStart = hasSelected && projectStatus === 'open' && escrowStatus !== 'held'
@@ -335,9 +323,26 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
     )
   }
 
+  // Sort applicants
+  function sortApplicants(apps) {
+    if (sortKey === 'kaajerscore') {
+      return [...apps].sort((a, b) => {
+        const sa = a.student_profiles?.kaajerscore ?? -1
+        const sb = b.student_profiles?.kaajerscore ?? -1
+        return sb - sa
+      })
+    }
+
+    // Default: date (ascending)
+    return [...apps].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  }
+
+  const pending = sortApplicants(applications.filter((a) => a.status === 'pending'))
+  const resolved = sortApplicants(applications.filter((a) => a.status !== 'pending'))
+
   return (
     <div className="space-y-5">
-      {/* Summary row + actions */}
+      {/* Header row: summary + sort + workspace */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-4 text-xs text-slate-500">
           <span>{applications.length} total applicant{applications.length !== 1 ? 's' : ''}</span>
@@ -347,6 +352,22 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
           {resolved.length > 0 && (
             <span>{resolved.length} reviewed</span>
           )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Sort dropdown */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Rank by:</span>
+            <select
+              id="applicant-sort-select"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              className="bg-white/5 border border-white/15 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500/50 cursor-pointer"
+            >
+              <option value="kaajerscore">⭐ KaajerScore (Trust Score)</option>
+              <option value="date">Applied Date</option>
+            </select>
+          </div>
         </div>
 
         {/* Phase 4: Project start / workspace actions */}
@@ -360,16 +381,30 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
         ) : null}
       </div>
 
+      {/* KaajerScore Ranking Banner */}
+      {sortKey === 'kaajerscore' && pending.length > 0 && (
+        <div className="flex items-start gap-3 bg-purple-500/10 border border-purple-500/25 rounded-xl px-4 py-3">
+          <span className="text-lg shrink-0">⭐</span>
+          <div>
+            <p className="text-purple-300 text-xs font-semibold">Ranked by KaajerScore</p>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Applicants are ranked by their trust score — a weighted blend of verified skills (30%), project ratings received (50%), and completion rate (20%). Higher = more reliable.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Pending applicants first */}
       {pending.length > 0 && (
         <div className="space-y-3">
           <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wide">
             ⏳ Awaiting Review
           </p>
-          {pending.map((app) => (
+          {pending.map((app, idx) => (
             <ApplicantCard
               key={app.id}
               app={app}
+              rank={sortKey === 'kaajerscore' ? idx + 1 : null}
               onAction={handleAction}
               actionLoading={actionLoading}
             />

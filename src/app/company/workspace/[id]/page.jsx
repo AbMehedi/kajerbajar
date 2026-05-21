@@ -195,7 +195,7 @@ export default async function CompanyWorkspacePage({ params }) {
                       ))}
                     </div>
                     {myReview.comment && (
-                      <p className="text-slate-300 text-sm italic">"{myReview.comment}"</p>
+                      <p className="text-slate-300 text-sm italic">&quot;{myReview.comment}&quot;</p>
                     )}
                   </div>
                   {/* Student's Review of Company */}
@@ -207,7 +207,7 @@ export default async function CompanyWorkspacePage({ params }) {
                       ))}
                     </div>
                     {studentReview.comment && (
-                      <p className="text-slate-300 text-sm italic">"{studentReview.comment}"</p>
+                      <p className="text-slate-300 text-sm italic">&quot;{studentReview.comment}&quot;</p>
                     )}
                   </div>
                 </div>

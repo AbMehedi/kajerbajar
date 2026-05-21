@@ -7,6 +7,7 @@
 
 import { requireAuthAndRole } from '@/lib/api'
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
+import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
 
 // Platform commission rate (10%)
@@ -91,6 +92,12 @@ export async function POST(request, { params }) {
       console.error('[projects/release POST] Wallet RPC error:', walletError)
       // Non-fatal: log but continue — can be reconciled later
     }
+
+    // 4b. Recalculate KaajerScore (affects Component 3: Completion Rate)
+    // Non-fatal — score update should not block payment confirmation.
+    await recalculateKaajerScore(selectedApp.student_id).catch((err) => {
+      console.error('[projects/release POST] KaajerScore update error:', err)
+    })
 
     // 5. Record escrow ledger entries
     await adminClient.from('escrow_ledger').insert([

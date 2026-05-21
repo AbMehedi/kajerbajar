@@ -9,7 +9,11 @@ import DeliverableSubmitForm from './DeliverableSubmitForm'
 import DeliverableCard from './DeliverableCard'
 import WorkspaceChat from '@/components/workspace/WorkspaceChat'
 import ReviewForm from '@/components/workspace/ReviewForm'
-import { Shield, Clock, CheckCircle, AlertCircle, FileText, Wallet, Star } from 'lucide-react'
+import { Shield, Clock, CheckCircle, AlertCircle, FileText, Wallet, Star, Award, Download } from 'lucide-react'
+
+// ── Certificate download button (client component) ────────────────────────
+// We keep it inline to avoid an extra file for a small piece of interactivity.
+import CertificateDownloadButton from '@/components/workspace/CertificateDownloadButton'
 
 export async function generateMetadata({ params }) {
   return { title: 'Active Workspace — KaajerBazar' }
@@ -179,6 +183,20 @@ export default async function StudentWorkspacePage({ params }) {
               </div>
             </div>
 
+            {/* Certificate Download — shown only when both reviews are complete */}
+            {myReview && companyReview && (
+              <div className="rounded-xl bg-gradient-to-r from-yellow-500/10 via-amber-500/8 to-yellow-500/10 border border-yellow-500/30 p-5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Award className="w-7 h-7 text-yellow-400 shrink-0" />
+                  <div>
+                    <p className="text-yellow-300 font-semibold">Your Certificate is Ready!</p>
+                    <p className="text-slate-400 text-sm">Download your official PDF Certificate of Completion.</p>
+                  </div>
+                </div>
+                <CertificateDownloadButton projectId={projectId} />
+              </div>
+            )}
+
             {/* Review Section */}
             {companyReview ? (
               myReview ? (
@@ -192,7 +210,7 @@ export default async function StudentWorkspacePage({ params }) {
                       ))}
                     </div>
                     {companyReview.comment && (
-                      <p className="text-slate-300 text-sm italic">"{companyReview.comment}"</p>
+                      <p className="text-slate-300 text-sm italic">&quot;{companyReview.comment}&quot;</p>
                     )}
                   </div>
                   {/* Student's Review of Company */}
@@ -204,7 +222,7 @@ export default async function StudentWorkspacePage({ params }) {
                       ))}
                     </div>
                     {myReview.comment && (
-                      <p className="text-slate-300 text-sm italic">"{myReview.comment}"</p>
+                      <p className="text-slate-300 text-sm italic">&quot;{myReview.comment}&quot;</p>
                     )}
                   </div>
                 </div>

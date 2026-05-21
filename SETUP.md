@@ -148,7 +148,7 @@ npm run test:verification
 | **skill_verifications** | id, student_id, skill_category, ai_brief, submission_text, submission_file_url, status, admin_feedback, created_at | Student skill proofs (Phase 2) |
 | **badges** | id, student_id, skill_tag, granted_at | Approved skill badges |
 | **projects** | id, company_id, title, description, required_skills[], budget_bdt, deadline, status, escrow_status, created_at | Micro-projects (Phase 3) |
-| **applications** | id, project_id, student_id, cover_note, ai_match_score, ai_match_reason, status, created_at | Student applications (Phase 3) |
+| **applications** | id, project_id, student_id, cover_note, status, created_at | Student applications (Phase 3) |
 | **workspaces** | id, project_id, student_id, company_id, created_at | Shared workspace (Phase 4) |
 | **workspace_tasks** | id, workspace_id, title, completed, updated_at | Real-time checklist (Phase 4) |
 | **workspace_files** | id, workspace_id, uploader_id, file_url, size, uploaded_at | File uploads (Phase 4) |

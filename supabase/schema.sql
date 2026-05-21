@@ -79,8 +79,6 @@ CREATE TABLE applications (
   student_id UUID REFERENCES student_profiles(id),
   cover_note TEXT,
   portfolio_item_url TEXT,
-  ai_match_score DECIMAL,
-  ai_match_reason TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'selected', 'rejected')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

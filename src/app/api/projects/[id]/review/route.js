@@ -4,6 +4,7 @@
 
 import { requireAuthAndRole, parseJsonBody } from '@/lib/api'
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
+import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
 
 export async function POST(request, { params }) {
@@ -110,37 +111,10 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 })
     }
 
-    // 5. Update KaajerScore for the reviewee
-    // In a double-blind system, we only update the student's score when the student submits their review (which unlocks the mutual review).
+    // 5. Recalculate KaajerScore (all 3 components) when student submits their review.
+    // This is when the double-blind lock is lifted, making ratings count towards the score.
     if (role === 'student') {
-      // The student just reviewed the company. This unlocks the company's review of the student for this project.
-      // We calculate the average of ALL company reviews that have been unlocked.
-      // Unlocked = student has also left a review for that project.
-      
-      const { data: allStudentReviews } = await adminClient
-        .from('project_reviews')
-        .select('project_id')
-        .eq('reviewer_id', user.id)
-      
-      const unlockedProjectIds = allStudentReviews?.map(r => r.project_id) || []
-
-      if (unlockedProjectIds.length > 0) {
-        const { data: receivedReviews } = await adminClient
-          .from('project_reviews')
-          .select('rating')
-          .eq('reviewee_id', user.id)
-          .in('project_id', unlockedProjectIds)
-
-        if (receivedReviews && receivedReviews.length > 0) {
-          const sum = receivedReviews.reduce((acc, curr) => acc + curr.rating, 0)
-          const avg = sum / receivedReviews.length
-
-          await adminClient
-            .from('student_profiles')
-            .update({ kaajerscore: avg })
-            .eq('id', user.id)
-        }
-      }
+      await recalculateKaajerScore(user.id)
     }
 
     return NextResponse.json({ success: true }, { status: 201 })

@@ -53,7 +53,7 @@ async function runTests() {
 
   // ── Test 1: No auth → 401 ────────────────────────────────────────
   {
-    const { status, data } = await post('/api/applications/create', {
+    const { status, data } = await post('/api/applications', {
       project_id: '00000000-0000-0000-0000-000000000001',
       cover_note: 'Test cover note',
     })
@@ -66,7 +66,7 @@ async function runTests() {
 
   // ── Test 2: Endpoint exists (not 404) ────────────────────────────
   {
-    const { status } = await post('/api/applications/create', {})
+    const { status } = await post('/api/applications', {})
     assert(status !== 404, 'Test 2: Endpoint exists (not 404) — got ' + status)
     assert(status === 401, 'Test 2: Returns auth error before validation')
   }
@@ -75,7 +75,7 @@ async function runTests() {
   // Without a real session we will always get 401 first.
   // These tests document the INTENDED behaviour; full integration tests need real JWTs.
   {
-    const { status } = await post('/api/applications/create', { cover_note: 'hi' })
+    const { status } = await post('/api/applications', { cover_note: 'hi' })
     assert(
       status === 401,
       'Test 3: Auth check fires before project_id validation (401 expected without session)'
@@ -84,7 +84,7 @@ async function runTests() {
 
   // ── Test 4: Empty cover_note → 400 (needs real session; expect 401 unauthenticated) ─
   {
-    const { status } = await post('/api/applications/create', {
+    const { status } = await post('/api/applications', {
       project_id: '00000000-0000-0000-0000-000000000001',
       cover_note: '',
     })

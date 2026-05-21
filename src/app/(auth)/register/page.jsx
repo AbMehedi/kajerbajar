@@ -60,12 +60,12 @@ function RoleCard({ role, activeRole, onSelect }) {
       onClick={() => onSelect(role.key)}
       className={`flex-1 flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${
         active
-          ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/25'
-          : 'border-white/15 bg-white/3 hover:border-purple-500/40 hover:bg-white/5'
+          ? 'border-[hsl(var(--kb-brand-500))] bg-[hsl(var(--kb-brand-500))/0.12] ring-2 ring-[hsl(var(--kb-brand-500))/0.25]'
+          : 'border-white/15 bg-white/3 hover:border-[hsl(var(--kb-brand-500))/0.4] hover:bg-white/5'
       }`}
     >
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-        active ? 'bg-purple-500/20 text-purple-300' : 'bg-white/8 text-slate-400'
+        active ? 'bg-[hsl(var(--kb-brand-500))/0.18] text-[hsl(var(--kb-brand-400))]' : 'bg-white/8 text-slate-400'
       }`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -111,13 +111,13 @@ function BrandPanel() {
   return (
     <div
       className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, hsl(267 60% 12%) 0%, hsl(222 47% 8%) 60%, hsl(267 50% 18%) 100%)' }}
+      style={{ background: 'linear-gradient(145deg, hsl(220 26% 10%) 0%, hsl(220 30% 6%) 60%, hsl(42 40% 12%) 100%)' }}
     >
       {/* Orbs */}
-      <div aria-hidden className="absolute -top-24 -right-20 w-80 h-80 rounded-full opacity-20 pointer-events-none"
-           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 9s ease-in-out infinite' }} />
-      <div aria-hidden className="absolute -bottom-20 -left-16 w-64 h-64 rounded-full opacity-15 pointer-events-none"
-           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 11s ease-in-out infinite reverse' }} />
+       <div aria-hidden className="absolute -top-24 -right-20 w-80 h-80 rounded-full opacity-20 pointer-events-none"
+         style={{ background: 'radial-gradient(circle, hsl(42 92% 55%) 0%, transparent 70%)', animation: 'float 9s ease-in-out infinite' }} />
+       <div aria-hidden className="absolute -bottom-20 -left-16 w-64 h-64 rounded-full opacity-15 pointer-events-none"
+         style={{ background: 'radial-gradient(circle, hsl(42 92% 55%) 0%, transparent 70%)', animation: 'float 11s ease-in-out infinite reverse' }} />
 
       {/* Grid overlay */}
       <svg aria-hidden className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
@@ -136,10 +136,10 @@ function BrandPanel() {
           transition={{ duration: 0.7, delay: 0.1 }}
         >
           <div
-            className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-6 mx-auto"
-            style={{ boxShadow: '0 0 32px hsl(267 84% 61% / 0.3)' }}
+            className="w-16 h-16 rounded-2xl bg-[hsl(var(--kb-brand-500))/0.15] border border-[hsl(var(--kb-brand-500))/0.35] flex items-center justify-center mb-6 mx-auto"
+            style={{ boxShadow: '0 0 32px hsl(42 92% 55% / 0.3)' }}
           >
-            <span className="text-2xl font-extrabold text-purple-300">ক</span>
+            <span className="text-2xl font-extrabold text-[hsl(var(--kb-brand-400))]">ক</span>
           </div>
 
           <h2 className="text-3xl font-extrabold text-white mb-3 leading-tight">
@@ -162,7 +162,7 @@ function BrandPanel() {
             { value: '৳2M+', label: 'Paid out'  },
             { value: '10%',  label: 'Commission' },
           ].map(({ value, label }) => (
-            <div key={label} className="bg-white/5 rounded-xl px-4 py-3 border border-white/8 text-center">
+            <div key={label} className="bg-white/4 rounded-xl px-4 py-3 border border-white/10 text-center">
               <p className="text-white font-bold text-lg">{value}</p>
               <p className="text-slate-500 text-xs">{label}</p>
             </div>
@@ -247,7 +247,7 @@ export default function RegisterPage() {
           {/* Mobile brand header */}
           <motion.div variants={itemVariants} className="text-center mb-8 lg:hidden">
             <h1 className="text-2xl font-bold text-white">কাজের বাজার</h1>
-            <p className="text-purple-300 mt-1 text-sm">KaajerBazar — Work Marketplace</p>
+            <p className="text-[hsl(var(--kb-brand-400))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
           </motion.div>
 
           <motion.div variants={itemVariants}>
@@ -368,7 +368,7 @@ export default function RegisterPage() {
 
           <motion.p variants={itemVariants} className="text-center text-slate-400 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+            <Link href="/login" className="text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
               Sign in
             </Link>
           </motion.p>

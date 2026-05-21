@@ -6,6 +6,7 @@
 
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/server-notifications'
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 // NOTE: In Next.js dev mode with React Strict Mode, useEffect fires twice —
@@ -139,7 +140,7 @@ export async function PATCH(request) {
     // Verify the application belongs to one of this company's projects
     const { data: application } = await supabase
       .from('applications')
-      .select('id, project_id, projects ( company_id )')
+      .select('id, project_id, student_id, projects ( company_id, title )')
       .eq('id', applicationId)
       .single()
 
@@ -157,6 +158,22 @@ export async function PATCH(request) {
     if (error) {
       console.error('[company/applications PATCH] DB error:', error)
       return NextResponse.json({ error: 'Failed to update application' }, { status: 500 })
+    }
+
+    // Send email notification if selected
+    if (newStatus === 'selected') {
+      try {
+        await createNotification({
+          userId: application.student_id,
+          type: 'application',
+          title: 'You were selected!',
+          body: `Congratulations! You have been selected for the project "${application.projects?.title}". The company will deposit escrow soon.`,
+          data: { link: `/student/workspace/${application.project_id}` },
+          sendEmail: true
+        })
+      } catch (notifErr) {
+        console.error('[company/applications PATCH] Failed to send notification:', notifErr)
+      }
     }
 
     return NextResponse.json({ success: true, status: newStatus })

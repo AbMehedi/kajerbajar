@@ -8,6 +8,8 @@ import DashboardShell from '@/components/layout/DashboardShell'
 import DeliverableReviewPanel from './DeliverableReviewPanel'
 import WorkspaceChat from '@/components/workspace/WorkspaceChat'
 import ReviewForm from '@/components/workspace/ReviewForm'
+import StatusTimeline from '@/components/workspace/StatusTimeline'
+import MilestoneTracker from '@/components/workspace/MilestoneTracker'
 import { Shield, CheckCircle, Clock, Wallet, FileText, Star } from 'lucide-react'
 
 export async function generateMetadata({ params }) {
@@ -130,6 +132,8 @@ export default async function CompanyWorkspacePage({ params }) {
           </div>
         </div>
 
+        <StatusTimeline projectStatus={project.status} escrowStatus={project.escrow_status} />
+
         {/* Project Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="glass rounded-xl p-4 border border-white/10">
@@ -223,6 +227,8 @@ export default async function CompanyWorkspacePage({ params }) {
             )}
           </div>
         )}
+
+        <MilestoneTracker projectId={projectId} role="company" />
 
         <DeliverableReviewPanel
           projectId={projectId}

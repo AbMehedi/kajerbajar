@@ -13,6 +13,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ExternalLink } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -88,9 +89,14 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             {rank && <RankBadge rank={rank} />}
-            <p className={`font-semibold text-sm ${isResolved ? 'text-slate-400' : 'text-white'}`}>
-              {name}
-            </p>
+            <Link 
+              href={`/profile/student/${app.student_id}`}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+              className={`font-semibold text-sm hover:underline hover:text-purple-400 flex items-center gap-1 ${isResolved ? 'text-slate-400' : 'text-white'}`}
+            >
+              {name} <ExternalLink className="w-3 h-3" />
+            </Link>
             <StatusBadge status={app.status} />
           </div>
           <p className="text-slate-500 text-xs">@{username} · {university}</p>

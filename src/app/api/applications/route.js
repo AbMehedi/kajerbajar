@@ -1,5 +1,6 @@
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/server-notifications'
 
 // Simple UUID-v4 shape check (Supabase UUIDs always match this pattern)
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -98,6 +99,21 @@ export async function POST(request) {
         { error: 'Failed to submit application. Please try again.' },
         { status: 500 }
       )
+    }
+
+    try {
+      const { data: projData } = await supabase.from('projects').select('company_id, title').eq('id', project_id).single()
+      if (projData) {
+        await createNotification({
+          userId: projData.company_id,
+          type: 'application',
+          title: 'New Application',
+          body: `A student applied to "${projData.title}"`,
+          data: { link: `/company/workspace/${project_id}` }
+        })
+      }
+    } catch (notifErr) {
+      console.error('Failed to send notification:', notifErr)
     }
 
     return NextResponse.json(

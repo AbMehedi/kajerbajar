@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
-import { Mail, Lock, ArrowRight } from 'lucide-react'
+import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react'
 
 const ROLE_DASHBOARD = {
   student: '/student/dashboard',
@@ -30,14 +30,14 @@ const itemVariants = {
 // ── Brand panel (left side) ────────────────────────────────────────────────────
 function BrandPanel() {
   return (
-    <div className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
-         style={{ background: 'linear-gradient(145deg, hsl(267 60% 12%) 0%, hsl(222 47% 8%) 60%, hsl(267 50% 18%) 100%)' }}>
+        <div className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
+          style={{ background: 'linear-gradient(145deg, hsl(220 26% 10%) 0%, hsl(220 30% 6%) 60%, hsl(42 40% 12%) 100%)' }}>
 
       {/* Background orbs */}
-      <div aria-hidden className="absolute -top-24 -left-24 w-80 h-80 rounded-full opacity-20 pointer-events-none"
-           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 9s ease-in-out infinite' }} />
-      <div aria-hidden className="absolute -bottom-20 -right-16 w-64 h-64 rounded-full opacity-15 pointer-events-none"
-           style={{ background: 'radial-gradient(circle, hsl(267 84% 61%) 0%, transparent 70%)', animation: 'float 11s ease-in-out infinite reverse' }} />
+       <div aria-hidden className="absolute -top-24 -left-24 w-80 h-80 rounded-full opacity-20 pointer-events-none"
+         style={{ background: 'radial-gradient(circle, hsl(42 92% 55%) 0%, transparent 70%)', animation: 'float 9s ease-in-out infinite' }} />
+       <div aria-hidden className="absolute -bottom-20 -right-16 w-64 h-64 rounded-full opacity-15 pointer-events-none"
+         style={{ background: 'radial-gradient(circle, hsl(42 92% 55%) 0%, transparent 70%)', animation: 'float 11s ease-in-out infinite reverse' }} />
 
       {/* Geometric SVG decoration */}
       <svg aria-hidden className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
@@ -57,15 +57,15 @@ function BrandPanel() {
           transition={{ duration: 0.7, delay: 0.1 }}
         >
           {/* Logo mark */}
-          <div className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-6 mx-auto"
-               style={{ boxShadow: '0 0 32px hsl(267 84% 61% / 0.3)' }}>
-            <span className="text-2xl font-extrabold text-purple-300">ক</span>
+          <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--kb-brand-500))/0.15] border border-[hsl(var(--kb-brand-500))/0.35] flex items-center justify-center mb-6 mx-auto"
+               style={{ boxShadow: '0 0 32px hsl(42 92% 55% / 0.3)' }}>
+            <span className="text-2xl font-extrabold text-[hsl(var(--kb-brand-400))]">ক</span>
           </div>
 
           <h2 className="text-3xl font-extrabold text-white mb-3 leading-tight">
             কাজের <span className="gradient-text">বাজার</span>
           </h2>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+            <p className="text-slate-300 text-sm leading-relaxed max-w-xs">
             Bangladesh&apos;s premier platform connecting verified university students with SME micro-projects.
           </p>
         </motion.div>
@@ -82,9 +82,9 @@ function BrandPanel() {
             { emoji: '🔒', text: 'Secure escrow payments'  },
             { emoji: '🚀', text: 'Real-world portfolio'    },
           ].map(({ emoji, text }) => (
-            <div key={text} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/8">
+            <div key={text} className="flex items-center gap-3 bg-white/4 rounded-xl px-4 py-3 border border-white/10">
               <span className="text-lg">{emoji}</span>
-              <span className="text-slate-300 text-sm">{text}</span>
+              <span className="text-slate-200 text-sm">{text}</span>
             </div>
           ))}
         </motion.div>
@@ -155,10 +155,17 @@ export default function LoginPage() {
           {/* Mobile brand header (only shown when brand panel is hidden) */}
           <motion.div variants={itemVariants} className="text-center mb-8 lg:hidden">
             <h1 className="text-2xl font-bold text-white">কাজের বাজার</h1>
-            <p className="text-purple-300 mt-1 text-sm">KaajerBazar — Work Marketplace</p>
+            <p className="text-[hsl(var(--kb-brand-400))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
           </motion.div>
 
           <motion.div variants={itemVariants}>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to home
+            </Link>
             <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
             <p className="text-slate-400 text-sm mb-8">Sign in to your account to continue.</p>
           </motion.div>
@@ -258,7 +265,7 @@ export default function LoginPage() {
 
           <motion.p variants={itemVariants} className="text-center text-slate-400 text-sm mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+            <Link href="/register" className="text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
               Register here
             </Link>
           </motion.p>

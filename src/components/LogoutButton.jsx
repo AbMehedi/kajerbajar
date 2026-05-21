@@ -13,9 +13,15 @@ export default function LogoutButton() {
 
   async function handleLogout() {
     setLoading(true)
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
-    router.refresh()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch (err) {
+      console.error('Logout failed:', err)
+    } finally {
+      // Always redirect to login regardless of API result
+      // to ensure the user isn't stuck if session is already gone
+      window.location.href = '/login'
+    }
   }
 
   return (

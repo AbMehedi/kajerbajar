@@ -38,24 +38,19 @@ function centeredText(page, text, { font, size, color, y }) {
 
 export async function GET(request, { params }) {
   try {
-    const auth = await requireAuthAndRole({ allowedRoles: ['student'] })
-    if (auth.errorResponse) return auth.errorResponse
-
-    const { user } = auth
     const { id: projectId } = await params
     const adminClient = await createAdminSupabaseClient()
 
-    // 1. Verify the student was selected for this project
+    // 1. Find the selected student for this project
     const { data: app } = await adminClient
       .from('applications')
       .select('student_id')
       .eq('project_id', projectId)
-      .eq('student_id', user.id)
       .eq('status', 'selected')
       .single()
 
     if (!app) {
-      return NextResponse.json({ error: 'Access denied — not assigned to this project' }, { status: 403 })
+      return NextResponse.json({ error: 'No student was assigned to this project' }, { status: 404 })
     }
 
     // 2. Fetch project data (projects table has created_at, NOT updated_at)
@@ -78,7 +73,7 @@ export async function GET(request, { params }) {
     const { data: studentProfile } = await adminClient
       .from('users_profiles')
       .select('full_name')
-      .eq('id', user.id)
+      .eq('id', app.student_id)
       .single()
 
     const studentName   = studentProfile?.full_name ?? 'Student'
@@ -89,7 +84,16 @@ export async function GET(request, { params }) {
     const completionDate = new Date(project.created_at).toLocaleDateString('en-GB', {
       day: 'numeric', month: 'long', year: 'numeric',
     })
-    const certId = `KB-${projectId.slice(0, 8).toUpperCase()}`
+    // 3b. Fetch the actual certificate ID from the database
+    const { data: certRecord } = await adminClient
+      .from('certificates')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('student_id', app.student_id)
+      .single()
+
+    const actualCertId = certRecord?.id || projectId
+    const certId = `KB-${actualCertId.slice(0, 8).toUpperCase()}`
 
     // ── 4. Build the PDF ──────────────────────────────────────────────────────
     const pdfDoc = await PDFDocument.create()

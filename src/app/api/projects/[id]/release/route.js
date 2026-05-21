@@ -6,9 +6,10 @@
 // Side-effect: calls increment_wallet RPC to credit the student
 
 import { requireAuthAndRole } from '@/lib/api'
-import { createAdminSupabaseClient } from '@/lib/supabase-server'
+import { createAdminSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/server-notifications'
 
 // Platform commission rate (10%)
 const COMMISSION_RATE = 0.10
@@ -24,6 +25,7 @@ export async function POST(request, { params }) {
     const { user } = auth
     const { id: projectId } = await params
     const adminClient = await createAdminSupabaseClient()
+    const serviceClient = createServiceRoleClient()
 
     // 1. Fetch and validate the project
     const { data: project, error: projectError } = await adminClient
@@ -82,7 +84,7 @@ export async function POST(request, { params }) {
     }
 
     // 4. Credit student wallet (call the existing RPC)
-    const { error: walletError } = await adminClient
+    const { error: walletError } = await serviceClient
       .rpc('increment_wallet', {
         student_id: selectedApp.student_id,
         amount: studentPayout,
@@ -100,7 +102,7 @@ export async function POST(request, { params }) {
     })
 
     // 5. Record escrow ledger entries
-    await adminClient.from('escrow_ledger').insert([
+    await serviceClient.from('escrow_ledger').insert([
       {
         project_id: projectId,
         event_type: 'release',
@@ -116,6 +118,32 @@ export async function POST(request, { params }) {
         to_party: 'platform',
       },
     ])
+
+    // 6. Generate Certificate Record
+    const { error: certError } = await serviceClient.from('certificates').insert([
+      {
+        project_id: projectId,
+        student_id: selectedApp.student_id,
+        // pdf_url is left null since we generate on-the-fly
+      }
+    ])
+    if (certError) {
+      console.error('[projects/release POST] Failed to insert certificate:', certError)
+      // Non-fatal, but logged
+    }
+
+    try {
+      await createNotification({
+        userId: selectedApp.student_id,
+        type: 'payment',
+        title: 'Payment Released!',
+        body: `৳${studentPayout} has been released to your wallet for "${project.title}".`,
+        data: { link: `/student/workspace/${projectId}` },
+        sendEmail: true
+      })
+    } catch (notifErr) {
+      console.error('[projects/release POST] Failed to send notification:', notifErr)
+    }
 
     return NextResponse.json({
       success: true,

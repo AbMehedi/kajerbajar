@@ -9,6 +9,8 @@ import DeliverableSubmitForm from './DeliverableSubmitForm'
 import DeliverableCard from './DeliverableCard'
 import WorkspaceChat from '@/components/workspace/WorkspaceChat'
 import ReviewForm from '@/components/workspace/ReviewForm'
+import StatusTimeline from '@/components/workspace/StatusTimeline'
+import MilestoneTracker from '@/components/workspace/MilestoneTracker'
 import { Shield, Clock, CheckCircle, AlertCircle, FileText, Wallet, Star, Award, Download } from 'lucide-react'
 
 // ── Certificate download button (client component) ────────────────────────
@@ -117,6 +119,8 @@ export default async function StudentWorkspacePage({ params }) {
             by {project.company_profiles?.legal_name}
           </p>
         </div>
+
+        <StatusTimeline projectStatus={project.status} escrowStatus={project.escrow_status} />
 
         {/* Project Summary Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
@@ -258,6 +262,8 @@ export default async function StudentWorkspacePage({ params }) {
             </div>
           </div>
         )}
+
+        <MilestoneTracker projectId={projectId} role="student" />
 
         {/* Deliverable submission form */}
         {isActive && (

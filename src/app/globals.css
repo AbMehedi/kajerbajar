@@ -41,34 +41,34 @@
    *   and it ripples across every component that uses it.
    */
   :root {
-    /* Brand purple — primary interactive colour */
-    --kb-brand-400:      267 84% 68%;
-    --kb-brand-500:      267 84% 61%;   /* hsl format for Tailwind extend */
-    --kb-brand-600:      267 84% 51%;
-    --kb-brand-700:      267 84% 41%;
+    /* Brand gold — primary interactive colour */
+    --kb-brand-400:      43 92% 64%;
+    --kb-brand-500:      42 92% 55%;   /* hsl format for Tailwind extend */
+    --kb-brand-600:      41 88% 48%;
+    --kb-brand-700:      40 82% 40%;
 
-    /* Neutral surface layers (dark by default) */
-    --kb-surface-900:    222 47% 6%;    /* deepest background */
-    --kb-surface-800:    222 47% 10%;   /* cards / panels */
-    --kb-surface-700:    222 47% 15%;   /* hover states */
-    --kb-surface-600:    222 47% 20%;   /* elevated hover */
+    /* Neutral surface layers (dark slate) */
+    --kb-surface-900:    220 30% 6%;    /* deepest background */
+    --kb-surface-800:    220 26% 10%;   /* cards / panels */
+    --kb-surface-700:    220 22% 15%;   /* hover states */
+    --kb-surface-600:    220 20% 20%;   /* elevated hover */
 
     /* Text */
-    --kb-text-primary:   0 0% 97%;
-    --kb-text-secondary: 215 20% 65%;
-    --kb-text-muted:     215 20% 45%;
+    --kb-text-primary:   0 0% 98%;
+    --kb-text-secondary: 215 16% 72%;
+    --kb-text-muted:     215 14% 52%;
 
     /* Status colours */
-    --kb-success:        142 71% 45%;
+    --kb-success:        150 62% 46%;
     --kb-warning:        38 92% 50%;
-    --kb-error:          0 84% 60%;
+    --kb-error:          0 78% 58%;
 
     /* Border */
-    --kb-border:         215 20% 20%;   /* subtle white/10 equivalent */
+    --kb-border:         215 20% 18%;   /* subtle white/10 equivalent */
 
     /* Glow effects */
-    --kb-glow-sm:         0 0 12px hsl(267 84% 61% / 0.35);
-    --kb-glow-md:         0 0 24px hsl(267 84% 61% / 0.25);
+    --kb-glow-sm:         0 0 12px hsl(42 92% 55% / 0.35);
+    --kb-glow-md:         0 0 24px hsl(42 92% 55% / 0.25);
 
     /* Layout */
     --kb-sidebar-width:   16rem;
@@ -83,7 +83,7 @@
     --background:        222 47% 6%;
     --foreground:        0 0% 97%;
     --border:            215 20% 20%;
-    --ring:              267 84% 61%;
+    --ring:              42 92% 55%;
     --radius:            0.625rem;
   }
 
@@ -134,7 +134,30 @@
   }
 }
 
-/* ── 3. Reusable Layout Utilities ── */
+/* ── 3. Reusable Components ── */
+@layer components {
+  .kb-input {
+    background-color: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    color: hsl(var(--kb-text-primary));
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--kb-radius-md);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  .kb-input::placeholder {
+    color: hsl(var(--kb-text-muted));
+  }
+
+  .kb-input:focus {
+    outline: none;
+    border-color: hsl(var(--kb-brand-500));
+    box-shadow: 0 0 0 2px hsl(var(--kb-brand-500) / 0.25);
+    background-color: rgb(255 255 255 / 0.08);
+  }
+}
+
+/* ── 4. Reusable Layout Utilities ── */
 @layer utilities {
   /* Readable line lengths */
   .text-balance {
@@ -146,10 +169,10 @@
    * Usage: <div className="glass"> content </div>
    */
   .glass {
-    background-color: rgb(255 255 255 / 0.05);
+    background-color: rgb(255 255 255 / 0.035);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgb(255 255 255 / 0.1);
+    border: 1px solid rgb(255 255 255 / 0.08);
   }
 
   /*
@@ -159,9 +182,9 @@
   .gradient-brand {
     background: linear-gradient(
       135deg,
-      hsl(222 47% 6%) 0%,
-      hsl(267 40% 12%) 50%,
-      hsl(222 47% 6%) 100%
+      hsl(220 30% 6%) 0%,
+      hsl(220 24% 10%) 45%,
+      hsl(40 50% 10%) 100%
     );
   }
 
@@ -197,26 +220,6 @@
     border-radius: var(--kb-radius-sm);
     font-size: 0.75rem;
     font-weight: 500;
-  }
-
-  .kb-input {
-    background-color: rgb(255 255 255 / 0.05);
-    border: 1px solid rgb(255 255 255 / 0.12);
-    color: hsl(var(--kb-text-primary));
-    padding: 0.6rem 0.9rem;
-    border-radius: var(--kb-radius-md);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  }
-
-  .kb-input::placeholder {
-    color: hsl(var(--kb-text-muted));
-  }
-
-  .kb-input:focus {
-    outline: none;
-    border-color: hsl(var(--kb-brand-500));
-    box-shadow: 0 0 0 2px hsl(var(--kb-brand-500) / 0.25);
-    background-color: rgb(255 255 255 / 0.08);
   }
 
   .kb-btn-primary {
@@ -285,9 +288,16 @@
   }
 
   .gradient-text {
-    background-image: linear-gradient(90deg, rgb(192 132 252), rgb(244 114 182));
+    background-image: linear-gradient(90deg, hsl(44 92% 58%), hsl(38 90% 50%));
     background-clip: text;
     color: transparent;
+  }
+
+  /* 
+   * Force pointer cursor for all buttons and anchors to ensure user feedback.
+   */
+  a, button {
+    cursor: pointer;
   }
 }
 

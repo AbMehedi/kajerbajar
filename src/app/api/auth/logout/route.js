@@ -9,11 +9,9 @@ export async function POST(request) {
     const supabase = await createServerSupabaseClient()
     await supabase.auth.signOut()
 
-    // Always redirect to /login after logout (works for both form POST and fetch)
-    const origin = new URL(request.url).origin
-    return NextResponse.redirect(`${origin}/login`, { status: 303 })
+    return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[logout] Unexpected error:', err)
-    return NextResponse.redirect('/login', { status: 303 })
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }

@@ -13,7 +13,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* Brand */}
-        <Link href="/" className="text-white font-bold text-lg">
+        <Link href="/" className="text-white font-bold text-lg hover:text-[hsl(var(--kb-brand-400))] transition-colors">
           কাজের বাজার
         </Link>
 
@@ -26,7 +26,7 @@ export default function Navbar() {
               className="group relative text-slate-300 hover:text-white text-sm transition-colors"
             >
               <span>{link.label}</span>
-              <span className="absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 bg-purple-400 transition-transform duration-300 group-hover:scale-x-100" />
+              <span className="absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 bg-[hsl(var(--kb-brand-400))] transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
           ))}
         </div>

@@ -68,8 +68,8 @@ _Goal: Build long-term value for students and facilitate project collaboration._
 
 _Goal: Final refinements for production readiness._
 
-- [ ] **Real-time Notifications (T6.1)**: In-app bell icon + unread badge count for new applications, messages, and payment events.
-- [ ] **Email Notifications (T6.2)**: Transactional emails via Supabase + Resend for key events.
+- [x] **Real-time Notifications (T6.1)**: In-app bell icon + unread badge count right inside the dashboard header along with `createNotification` event trigger hooks.
+- [x] **Email Notifications (T6.2)**: Transactional emails via Supabase + Resend for key events.
 - [ ] **SEO & Performance (T6.3)**: `generateMetadata` on all pages, image optimisation, Open Graph tags.
 - [ ] **Mobile Responsiveness (T6.4)**: Audit and fix responsive layouts across all dashboards.
 - [ ] **Deployment (T6.5)**: Production setup on Vercel with environment variables and Supabase edge config.
@@ -95,13 +95,55 @@ _Goal: Final refinements for production readiness._
 
 | Task ID | Description                                                         | Status | Priority |
 | :------ | :------------------------------------------------------------------ | :----- | :------- |
-| T6.1    | Real-time In-App Notifications (bell + badge)                       | ⚪ Todo | High     |
-| T6.2    | Email Notifications (Resend integration)                            | ⚪ Todo | Med      |
+| T6.1    | Real-time In-App Notifications (bell + badge)                       | ✅ Done | High     |
+| T6.2    | Email Notifications (Resend integration)                            | ✅ Done | Med      |
 | T6.3    | SEO & Metadata (`generateMetadata` on all pages)                    | ⚪ Todo | Med      |
 | T6.4    | Mobile Responsiveness audit & fixes                                 | ⚪ Todo | Med      |
 | T6.5    | Production Deployment on Vercel                                     | ⚪ Todo | High     |
+| T6.6    | Project Tracking (status, milestones, escrow state)                 | ✅ Done | High     |
+| T6.7    | Home Page Minimal Redesign                                           | ✅ Done | Med      |
 
 ---
+
+## ✅ Phase 6 Implementation Plan
+
+1. **Define scope + acceptance criteria**
+	- Roles: **both** student + company tracking views.
+	- Fields: **status, milestones, escrow state, deliverables**.
+	- Placement: **dashboard summary + workspace details**.
+
+2. **Notifications (T6.1)**
+	- Data: add `notifications` table + RLS policies.
+	- API: `/api/notifications` (list, mark read).
+	- UI: bell icon + unread badge in dashboard header.
+
+3. **Email (T6.2)**
+	- Configure Resend + email templates.
+	- Trigger emails on key events: application, message, escrow release.
+
+4. **Project Tracking (T6.6)**
+	- Add tracking model: milestones + deliverable status.
+	- API: endpoints to create/update milestones and deliverable states.
+	- UI: progress card + status timeline + escrow badge in workspace.
+
+5. **SEO & Performance (T6.3)**
+	- Add `generateMetadata` to key routes.
+	- Optimize images + reduce layout shift.
+
+6. **Mobile Responsiveness (T6.4)**
+	- Audit dashboards + forms, fix overflow and spacing issues.
+
+7. **Deployment (T6.5)**
+	- Verify env vars, Supabase keys, storage policies.
+	- Production build + smoke test main flows.
+
+## 🧭 Recent Updates (May 21, 2026)
+
+- **Home page**: Minimal layout with Bengali headline + stats/features sections.
+- **UI polish**: Gold accent palette + updated shells and navbar accents.
+- **Certificates**: KB-style certificate ID display + copy button; verify endpoint aligned.
+- **Auth**: Login page includes back-to-home link.
+- **Inputs**: `kb-input` adjusted to avoid icon overlap.
 
 > [!NOTE]
 > **Phase 5 is now complete!** All 8 tasks done. Now entering **Phase 6** — final polish and production deployment.

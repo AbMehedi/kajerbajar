@@ -57,7 +57,7 @@ export default function MobileSidebarDrawer({
                       className={
                         `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ` +
                         (isActive
-                          ? 'border-l-2 border-purple-500 bg-purple-500/10 text-white'
+                          ? 'border-l-2 border-[hsl(var(--kb-brand-500))] bg-[hsl(var(--kb-brand-500))/0.12] text-white'
                           : 'text-slate-300 hover:bg-white/5 hover:text-white')
                       }
                     >
@@ -70,7 +70,7 @@ export default function MobileSidebarDrawer({
 
               <div className="mt-6 border-t border-white/10 pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500/80 to-indigo-500/80 text-sm font-semibold text-white flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-sm font-semibold text-white flex items-center justify-center">
                     {initials}
                   </div>
                   <div>

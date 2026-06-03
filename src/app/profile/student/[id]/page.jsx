@@ -56,6 +56,7 @@ export default async function StudentPublicProfilePage({ params }) {
     { data: reviews },
     { data: verifications },
     { data: certificates },
+    { data: studentBadge },
   ] = await Promise.all([
     adminClient.from('student_profiles').select(`
       *,
@@ -68,7 +69,8 @@ export default async function StudentPublicProfilePage({ params }) {
     adminClient.from('project_reviews').select('project_id, rating, comment, created_at, reviewer:users_profiles!reviewer_id(full_name)')
       .eq('reviewee_id', id).order('created_at', { ascending: false }),
     adminClient.from('skill_verifications').select('status, skill_category').eq('student_id', id).eq('status', 'approved'),
-    adminClient.from('certificates').select('id, project_id, issued_at').eq('student_id', id)
+    adminClient.from('certificates').select('id, project_id, issued_at').eq('student_id', id),
+    adminClient.from('student_badges').select('badge_type, is_active').eq('student_id', id).eq('is_active', true).order('awarded_at', { ascending: false }).limit(1).maybeSingle()
   ])
 
   const profile = student?.users_profiles
@@ -103,6 +105,13 @@ export default async function StudentPublicProfilePage({ params }) {
     ? { role, fullName: viewerName, activePath: null }
     : { activePath: null }
 
+  const BADGE_LABELS = {
+    rising_talent:   { label: '🌟 Rising Star',   color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+    top_rated:       { label: '⭐ Top Rated',      color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+    top_rated_plus:  { label: '🏆 Elite',         color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  }
+  const activeBadge = studentBadge ?? null
+
   return (
     <Shell {...shellProps}>
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
@@ -114,7 +123,14 @@ export default async function StudentPublicProfilePage({ params }) {
               {(profile?.full_name ?? 'S').charAt(0)}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white mb-1">{profile?.full_name ?? 'Student'}</h1>
+              <div className="flex items-center gap-3 flex-wrap mb-1">
+                <h1 className="text-3xl font-bold text-white">{profile?.full_name ?? 'Student'}</h1>
+                {activeBadge && (
+                  <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold \${BADGE_LABELS[activeBadge.badge_type]?.color ?? 'bg-white/10 text-white border-white/20'}`}>
+                    {BADGE_LABELS[activeBadge.badge_type]?.label ?? activeBadge.badge_type}
+                  </span>
+                )}
+              </div>
               <p className="text-purple-400 font-medium">@{student?.username}</p>
               <p className="text-slate-400 text-sm mt-1">{student?.university ?? 'University not listed'}</p>
               {student?.bio && (

@@ -2,6 +2,7 @@
 // Public navigation bar for marketing/auth pages only.
 
 import Link from 'next/link'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const PUBLIC_LINKS = [
   { href: '/', label: 'Home' },
@@ -9,11 +10,11 @@ const PUBLIC_LINKS = [
 
 export default function Navbar() {
   return (
-    <nav className="glass border-b sticky top-0 z-50">
+    <nav className="glass border-b border-[hsl(var(--kb-border))] sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* Brand */}
-        <Link href="/" className="text-white font-bold text-lg hover:text-[hsl(var(--kb-brand-400))] transition-colors">
+        <Link href="/" className="text-[hsl(var(--kb-text-primary))] font-bold text-lg hover:text-[hsl(var(--kb-brand-400))] transition-colors">
           কাজের বাজার
         </Link>
 
@@ -23,7 +24,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="group relative text-slate-300 hover:text-white text-sm transition-colors"
+              className="group relative text-[hsl(var(--kb-text-secondary))] hover:text-[hsl(var(--kb-text-primary))] text-sm transition-colors"
             >
               <span>{link.label}</span>
               <span className="absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 bg-[hsl(var(--kb-brand-400))] transition-transform duration-300 group-hover:scale-x-100" />
@@ -33,6 +34,7 @@ export default function Navbar() {
 
         {/* Auth controls */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link
             id="navbar-login"
             href="/login"

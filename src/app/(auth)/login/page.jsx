@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const ROLE_DASHBOARD = {
   student: '/student/dashboard',
@@ -30,7 +31,7 @@ const itemVariants = {
 // ── Brand panel (left side) ────────────────────────────────────────────────────
 function BrandPanel() {
   return (
-        <div className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
+        <div className="dark hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
           style={{ background: 'linear-gradient(145deg, hsl(220 26% 10%) 0%, hsl(220 30% 6%) 60%, hsl(42 40% 12%) 100%)' }}>
 
       {/* Background orbs */}
@@ -145,7 +146,11 @@ export default function LoginPage() {
       <BrandPanel />
 
       {/* ── Right: Form panel ── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -154,20 +159,20 @@ export default function LoginPage() {
         >
           {/* Mobile brand header (only shown when brand panel is hidden) */}
           <motion.div variants={itemVariants} className="text-center mb-8 lg:hidden">
-            <h1 className="text-2xl font-bold text-white">কাজের বাজার</h1>
-            <p className="text-[hsl(var(--kb-brand-400))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
+            <h1 className="text-2xl font-bold text-[hsl(var(--kb-text-primary))]">কাজের বাজার</h1>
+            <p className="text-[hsl(var(--kb-brand-500))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
           </motion.div>
 
           <motion.div variants={itemVariants}>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6"
+              className="inline-flex items-center gap-2 text-sm text-[hsl(var(--kb-text-secondary))] hover:text-[hsl(var(--kb-text-primary))] transition-colors mb-6"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to home
             </Link>
-            <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
-            <p className="text-slate-400 text-sm mb-8">Sign in to your account to continue.</p>
+            <h2 className="text-2xl font-bold text-[hsl(var(--kb-text-primary))] mb-1">Welcome back</h2>
+            <p className="text-[hsl(var(--kb-text-secondary))] text-sm mb-8">Sign in to your account to continue.</p>
           </motion.div>
 
           {/* Error */}
@@ -200,17 +205,17 @@ export default function LoginPage() {
 
           {/* Divider */}
           <motion.div variants={itemVariants} className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-slate-500 text-xs">or sign in with email</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-[hsl(var(--kb-border))]" />
+            <span className="text-[hsl(var(--kb-text-muted))] text-xs">or sign in with email</span>
+            <div className="flex-1 h-px bg-[hsl(var(--kb-border))]" />
           </motion.div>
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <motion.div variants={itemVariants}>
-              <label htmlFor="email" className="block text-slate-300 text-sm mb-1.5">Email address</label>
+              <label htmlFor="email" className="block text-[hsl(var(--kb-text-secondary))] text-sm mb-1.5">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--kb-text-muted))] pointer-events-none" />
                 <input
                   id="email"
                   type="email"
@@ -224,9 +229,9 @@ export default function LoginPage() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <label htmlFor="password" className="block text-slate-300 text-sm mb-1.5">Password</label>
+              <label htmlFor="password" className="block text-[hsl(var(--kb-text-secondary))] text-sm mb-1.5">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--kb-text-muted))] pointer-events-none" />
                 <input
                   id="password"
                   type="password"
@@ -263,9 +268,9 @@ export default function LoginPage() {
             </motion.div>
           </form>
 
-          <motion.p variants={itemVariants} className="text-center text-slate-400 text-sm mt-6">
+          <motion.p variants={itemVariants} className="text-center text-[hsl(var(--kb-text-secondary))] text-sm mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
+            <Link href="/register" className="text-[hsl(var(--kb-brand-600))] dark:text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-700))] dark:hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
               Register here
             </Link>
           </motion.p>

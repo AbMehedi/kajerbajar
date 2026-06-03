@@ -1,149 +1,98 @@
 # KaajerBazar (কাজের বাজার) - Project Roadmap & Task List
 
-KaajerBazar is a premier student-startup micro-project marketplace in Bangladesh. This document tracks the development progress and upcoming tasks.
-
-## 🏗️ Project Overview
-
-- **Goal:** Connect university students with startups for micro-projects.
-- **Tech Stack:** Next.js (App Router), Supabase (Auth, DB, Storage), Tailwind CSS, Shadcn UI.
-- **Key Features:** Role-based dashboards, AI-assisted skill verification, Secure Escrow system, Automated certification.
+KaajerBazar is a premier student-startup micro-project marketplace in Bangladesh. This document tracks the development progress of each feature phase and specifies remaining tasks.
 
 ---
 
-## 🛤️ Development Phases
+## 🏗️ Project Status Summary
+
+*   **Total Progress:** ~95% Complete.
+*   **Completed Phases:** Phase 1, Phase 2, Phase 3, Phase 4, and Phase 5 are fully complete. Core features are developed, and related integration APIs are successfully tested.
+*   **Current Phase:** Phase 6 (Final Polish & Launch readiness) is underway, with most backend integrations (Notifications, Emails, Milestones) completed.
+*   **Documentation:** Detailed system specifications and schema catalogs are documented in the system documentation.
+
+---
+
+## 🛤️ Development Phases Progress
 
 ### Phase 1: Foundation & Authentication 🟢 (Completed)
+*Goal: Establish core user models, secure access controls, and basic dashboards.*
+*   [x] **Project Setup:** Next.js, Tailwind, and Shadcn UI setup.
+*   [x] **Database Schema:** Users, student profiles, and company profiles creation.
+*   [x] **Auth Flows:** Credentials login/registration + Google login callback hooks.
+*   [x] **RBAC Middleware:** Guarding pages `/student`, `/company`, `/admin` using the middleware controller.
+*   [x] **Dashboards:** Role-specific shells and navigation layout.
 
-_Goal: Establish the core infrastructure and secure access._
-
-- [x] **Project Initialization**: Next.js, Tailwind, and Shadcn UI setup.
-- [x] **Database Schema**: Comprehensive Postgres schema in Supabase (Users, Profiles, Projects, Escrow).
-- [x] **Authentication Flow**: Login and Registration with role selection (Student/Company).
-- [x] **Role-Based Access Control**: Middleware implementation to guard `/student`, `/company`, and `/admin` routes.
-- [x] **Landing Page**: Premium hero section and feature overview.
-- [x] **Dashboard Skeletons**: Basic layouts for all three user roles.
-
-### Phase 2: Skill Verification & AI Integration 🟢 (Completed)
-
-_Goal: Allow students to prove their expertise using AI-driven verification._
-
-- [x] **Student Profile Completion**: `/student/profile/edit` page + `GET/POST /api/student/profile` API to update university, bio, graduation year, and portfolio URL.
-- [x] **Skill Submission UI**: `SkillVerification.jsx` — students request an AI brief, then submit work via drag-and-drop file upload (ZIP, PDF, etc., up to 50 MB) and/or text description.
-- [x] **File Upload Infrastructure**: Supabase `skill-submissions` bucket + signed upload URLs via `GET /api/skills/verify/upload-url`. Files go browser → Storage directly (no server bottleneck).
-- [x] **AI Verification Logic**: `POST /api/skills/verify/start` calls Groq (Llama 3) to generate a 2-hour tailored project brief per skill. Fallback brief if AI is unavailable.
-- [x] **Admin Verification Queue**: `SkillReviewQueue.jsx` — admins expand each submission to see the AI brief, student description, download attached files (signed 60s URL), and Approve / Request Revision / Reject.
-- [x] **Skills Display**: `SkillBadges.jsx` — approved verifications render as green skill badges on the student dashboard.
-- [x] **Badge Granting**: On Admin Approve, a record is upserted to the `badges` table via the service-role client.
+### Phase 2: Learning Modules & Automated Reputation 🟢 (Completed)
+*Goal: Enable students to prove expertise using AI-generated mini-projects and automate reputation tiers.*
+*   [x] **Profile Setup:** Student profile editing, including bio, portfolio URL, and university mapping.
+*   [x] **AI Brief Generator:** Dynamic, story-based briefs generated using the Grok API.
+*   [x] **Submission Lifecycle:** Submitting briefs, uploading files to private buckets, and automatic cooldown rules (24-hour lock on failure, 7-day lockout on 3 failed attempts).
+*   [x] **Review Interface:** Admin queue to pass/fail submissions and provide textual feedback.
+*   [x] **Badge Automation:** Instant evaluation of earnings and reviews to assign badges automatically.
 
 ### Phase 3: Project Marketplace 🟢 (Completed)
+*Goal: Allow companies to list work and match with qualified students.*
+*   [x] **Posting Flows:** Company UI to create projects with budgets, durations, and skills requirements.
+*   [x] **Match Score:** Calculating similarity matches based on verified student skills.
+*   [x] **Project Search:** Student discovery interface to browse, filter, and apply for projects.
+*   [x] **Applicant Queue:** Company view to review submissions, inspect student badges, and hire candidates.
 
-_Goal: Enable companies to post work and students to apply._
+### Phase 4: Escrow & Workspace Execution 🟢 (Completed)
+*Goal: Secure payments and coordinate workspace tasks.*
+*   [x] **Escrow Deposits:** Virtual platforms to deposit funds before project initiation.
+*   [x] **Milestone Management:** Real-time milestone tracker UI and APIs inside the workspace.
+*   [x] **Deliverables Pipeline:** Student uploads, file storage, and status verification.
+*   [x] **Funds Release:** Releasing funds to student wallets on approval, with a 10% platform commission deduction.
 
-- [x] **Project Posting Flow**: Company interface to create projects with budget, duration, and required skills. (`POST /api/projects`)
-- [x] **Project Discovery**: Student view to browse and filter open projects. (`/student/projects`)
-- [x] **AI-Powered Matching**: Calculate "Match Score" between student skills and project requirements. (`calculateMatchScore` in `ai.js`, stored in `applications`)
-- [x] **Application System**: Students can apply with cover notes; companies can review and select candidates. (`/api/applications` and `/api/company/applications`)
+### Phase 5: Communication, Certification & Reputation 🟢 (Completed)
+*Goal: Enhance collaboration, double-blind review fairness, and completion awards.*
+*   [x] **Workspace Chat:** Instant real-time messaging using WebSockets.
+*   [x] **Double-Blind Reviews:** Ratings and comments remain hidden until both parties review each other.
+*   [x] **KaajerScore Overhaul:** Reputation formula calculation (30% skills, 50% ratings, 20% completion).
+*   [x] **Automated Certificates:** PDF certificate generation on-the-fly inside the certificate API endpoint.
 
-### Phase 4: Escrow & Project Execution 🟢 (Completed)
-
-_Goal: Secure payments and manage active work._
-
-- [x] **Database Setup**: Create `project_deliverables` table and `project-deliverables` storage bucket.
-- [x] **Escrow Deposit**: Companies deposit funds into the platform ledger before work starts. (`POST /api/projects/[id]/start`)
-- [x] **Student Workspace Hub**: Project list page grouped by status + per-project workspace. (`/student/workspace`, `/student/workspace/[id]`)
-- [x] **Company Workspace Hub**: Project list page grouped by status + per-project workspace. (`/company/workspace`, `/company/workspace/[id]`)
-- [x] **Payment Release**: Logic to transfer funds from Escrow to Student Wallet upon approval. (`POST /api/projects/[id]/release`)
-
-### Phase 5: Communication, Certification & Reputation ✅ (Completed)
-
-_Goal: Build long-term value for students and facilitate project collaboration._
-
-- [x] **Workspace Messaging**: Real-time chat between students and companies inside project workspaces.
-- [x] **Review System**: Mutual double-blind 1-5 star reviews between students and companies upon payment release.
-- [x] **KaajerScore Profile Integration**: Display the average star rating and reviews on the student's profile.
-- [x] **KaajerScore Reputation Engine & Overhaul**: Implement weighted trust score (30/50/20) + breakdown UI card + candidate sorting on company dashboard.
-- [x] **Automated Certificates**: Generate PDF certificates for successfully completed projects.
-
-### Phase 6: Final Polish & Launch 🔄 (Current Phase)
-
-_Goal: Final refinements for production readiness._
-
-- [x] **Real-time Notifications (T6.1)**: In-app bell icon + unread badge count right inside the dashboard header along with `createNotification` event trigger hooks.
-- [x] **Email Notifications (T6.2)**: Transactional emails via Supabase + Resend for key events.
-- [ ] **SEO & Performance (T6.3)**: `generateMetadata` on all pages, image optimisation, Open Graph tags.
-- [ ] **Mobile Responsiveness (T6.4)**: Audit and fix responsive layouts across all dashboards.
-- [ ] **Deployment (T6.5)**: Production setup on Vercel with environment variables and Supabase edge config.
+### Phase 6: Final Polish & Launch 🔄 (In Progress)
+*Goal: Production refinements, mobile responsiveness, and deployment.*
+*   [x] **In-App Notifications (T6.1):** Real-time bell dropdown in dashboard headers via the notifications dropdown.
+*   [x] **Email Alerts (T6.2):** Automated transaction mailers via Resend.
+*   [x] **SEO & Metadata (T6.3):** Meta headers configured on all main routes.
+*   [x] **Project Progress Tracking (T6.6):** Project workflow and timeline stages visually complete.
+*   [x] **Home Page Redesign (T6.7):** Clean landing layout presenting user stories.
+*   [ ] **Mobile Responsiveness (T6.4):** Conduct responsive visual audits on workspace cards, dashboard layout grids, and forms.
+*   [ ] **Production Deployment (T6.5):** Deploy project on Vercel, run schema scripts, configure env secrets, and execute E2E smoke tests.
 
 ---
 
-## 🛠️ Current Task List (Phase 5 Focus)
+## 📋 Detailed Task List (Phase 6 Focus)
 
-| Task ID | Description                                                          | Status  | Priority |
-| :------ | :------------------------------------------------------------------- | :------ | :------- |
-| T5.1    | Database Migration (`project_reviews`, `chat_messages`)              | ✅ Done | High     |
-| T5.2    | Workspace Chat API (`/api/projects/[id]/chat`)                       | ✅ Done | High     |
-| T5.3    | Workspace Chat UI (Supabase Realtime integration)                    | ✅ Done | High     |
-| T5.4    | Double-Blind Review API (`/api/projects/[id]/review`)                | ✅ Done | High     |
-| T5.5    | Workspace Review Form & UI Enforcement                               | ✅ Done | High     |
-| T5.6    | Student Profile: KaajerScore & Archive display                       | ✅ Done | Med      |
-| T5.7    | Automated Certificates generation (PDF)                              | ✅ Done | Med      |
-| T5.8    | KaajerScore Overhaul (30/50/20 weighted formula) & Applicant Sorting | ✅ Done | High     |
-
----
-
-## 🛠️ Current Task List (Phase 6 Focus)
-
-| Task ID | Description                                                         | Status | Priority |
-| :------ | :------------------------------------------------------------------ | :----- | :------- |
-| T6.1    | Real-time In-App Notifications (bell + badge)                       | ✅ Done | High     |
-| T6.2    | Email Notifications (Resend integration)                            | ✅ Done | Med      |
-| T6.3    | SEO & Metadata (`generateMetadata` on all pages)                    | ⚪ Todo | Med      |
-| T6.4    | Mobile Responsiveness audit & fixes                                 | ⚪ Todo | Med      |
-| T6.5    | Production Deployment on Vercel                                     | ⚪ Todo | High     |
-| T6.6    | Project Tracking (status, milestones, escrow state)                 | ✅ Done | High     |
-| T6.7    | Home Page Minimal Redesign                                           | ✅ Done | Med      |
+| Task ID | Component / Area | Description | Priority | Status |
+|:---|:---|:---|:---|:---|
+| **T6.1** | Notifications | Real-time in-app bell dropdown & counter | High | ✅ Done |
+| **T6.2** | Emails | Transactional mailers on status updates (Resend integration) | Med | ✅ Done |
+| **T6.3** | SEO / Performance | Configured site-wide layout and page-level metadata headers | Med | ✅ Done |
+| **T6.4** | Responsiveness | Audit layouts across mobile/tablet views (Dashboards, Workspace, Forms) | Med | ⚪ Todo |
+| **T6.5** | Deployment | Launch live on Vercel, set env variables, and verify database tables | High | ⚪ Todo |
+| **T6.6** | Milestones | Project workspace tracking and progress milestones | High | ✅ Done |
+| **T6.7** | Landing Page | Polish home layout for desktop and mobile views | Med | ✅ Done |
 
 ---
 
-## ✅ Phase 6 Implementation Plan
+## 🚀 Step-by-Step Launch Plan
 
-1. **Define scope + acceptance criteria**
-	- Roles: **both** student + company tracking views.
-	- Fields: **status, milestones, escrow state, deliverables**.
-	- Placement: **dashboard summary + workspace details**.
+### 1. Mobile Responsiveness Visual Audit (T6.4)
+*   **Dashboard grids:** Inspect the student, company, and admin dashboards on simulated mobile screen dimensions. Ensure grid columns wrap nicely.
+*   **Workspace layouts:** Verify that chat messages, deliverable forms, and milestone components remain usable and don't introduce horizontal scroll.
+*   **Forms UI:** Ensure inputs and button sizes are touch-friendly.
 
-2. **Notifications (T6.1)**
-	- Data: add `notifications` table + RLS policies.
-	- API: `/api/notifications` (list, mark read).
-	- UI: bell icon + unread badge in dashboard header.
-
-3. **Email (T6.2)**
-	- Configure Resend + email templates.
-	- Trigger emails on key events: application, message, escrow release.
-
-4. **Project Tracking (T6.6)**
-	- Add tracking model: milestones + deliverable status.
-	- API: endpoints to create/update milestones and deliverable states.
-	- UI: progress card + status timeline + escrow badge in workspace.
-
-5. **SEO & Performance (T6.3)**
-	- Add `generateMetadata` to key routes.
-	- Optimize images + reduce layout shift.
-
-6. **Mobile Responsiveness (T6.4)**
-	- Audit dashboards + forms, fix overflow and spacing issues.
-
-7. **Deployment (T6.5)**
-	- Verify env vars, Supabase keys, storage policies.
-	- Production build + smoke test main flows.
-
-## 🧭 Recent Updates (May 21, 2026)
-
-- **Home page**: Minimal layout with Bengali headline + stats/features sections.
-- **UI polish**: Gold accent palette + updated shells and navbar accents.
-- **Certificates**: KB-style certificate ID display + copy button; verify endpoint aligned.
-- **Auth**: Login page includes back-to-home link.
-- **Inputs**: `kb-input` adjusted to avoid icon overlap.
-
-> [!NOTE]
-> **Phase 5 is now complete!** All 8 tasks done. Now entering **Phase 6** — final polish and production deployment.
+### 2. Live Vercel Deployment (T6.5)
+*   **GitHub Integration:** Connect the repository to Vercel.
+*   **Secret Keys Configuration:** Copy all keys into Vercel settings:
+    *   `NEXT_PUBLIC_SUPABASE_URL`
+    *   `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    *   `SUPABASE_SERVICE_ROLE_KEY`
+    *   `GROQ_API_KEY`
+    *   `RESEND_API_KEY` (if live mailers are desired)
+    *   `NEXT_PUBLIC_APP_URL`
+*   **Supabase Schema Verification:** Verify that all SQL scripts have been run on the production database.
+*   **Storage Buckets:** Verify that the three storage buckets are initialized as private buckets, and that storage RLS rules are applied.

@@ -1,109 +1,129 @@
 // src/lib/ai.js
-// AI client using Groq (open-source Llama 3 model)
-// Drop-in replacement for the old claude.js — same interface, open-source backend.
+// AI client for KaajerBazar — Learning Module Brief Generation
 //
-// Model: llama3-8b-8192 (fast, free tier on Groq)
-// API: Groq — 100% OpenAI-compatible, no SDK change needed
-// Docs: https://console.groq.com/docs/openai
+// Uses the Grok API (xAI) via the OpenAI-compatible SDK.
+// Default model: grok-2-1212
+//
+// Environment variables:
+//   GROQ_API_KEY        — Your Groq API key (required)
+//   AI_BRIEF_MODEL      — Model name (default: "llama-3.1-8b-instant")
+//   AI_BRIEF_BASE_URL   — API base URL (default: "https://api.groq.com/openai/v1")
+//
+// NOTE: If you want to switch to a different provider (OpenAI, Anthropic, xAI, etc.),
+//       simply update AI_BRIEF_BASE_URL and AI_BRIEF_MODEL in your .env.local
+//       and provide the matching API key as GROQ_API_KEY.
+//       The OpenAI SDK is used universally here for maximum compatibility.
 
 import OpenAI from 'openai'
 
-// Groq uses the OpenAI SDK with a custom baseURL
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
-})
+// Read from environment — easy to swap without code changes
+let aiClient = null
 
-// The model to use. llama3-8b is fast; swap to llama3-70b for higher quality.
-const MODEL = 'llama3-8b-8192'
-
-/**
- * generateSkillBrief
- * Generates a 2-hour project brief for a given skill.
- * Used when a student starts a skill verification.
- *
- * @param {string} skill - e.g. "React.js", "Python", "Graphic Design"
- * @returns {Promise<string>} - The project brief text
- */
-export async function generateSkillBrief(skill) {
-  const completion = await groq.chat.completions.create({
-    model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a technical skills assessor for KaajerBazar, a Bangladeshi freelance marketplace.
-Your job is to create short, practical project briefs that test real-world skill proficiency.
-Keep briefs clear, achievable in 2 hours, and appropriate for a junior-to-mid level developer.`,
-      },
-      {
-        role: 'user',
-        content: `Create a 2-hour project brief to verify a candidate's skill in: "${skill}".
-
-Format your response as:
-📌 TASK TITLE: (short title)
-🎯 OBJECTIVE: (1-2 sentences describing the goal)
-📋 REQUIREMENTS:
-  - Requirement 1
-  - Requirement 2
-  - Requirement 3
-⏱️ ESTIMATED TIME: 2 hours
-📦 DELIVERABLE: (what they should submit)`,
-      },
-    ],
-    temperature: 0.7,
-    max_tokens: 512,
-  })
-
-  return completion.choices[0].message.content
+function getAI() {
+  if (!aiClient) {
+    const AI_BASE_URL = process.env.AI_BRIEF_BASE_URL || 'https://api.groq.com/openai/v1'
+    const AI_API_KEY  = process.env.GROQ_API_KEY || 'dummy-key-for-build'
+    
+    aiClient = new OpenAI({
+      apiKey:  AI_API_KEY,
+      baseURL: AI_BASE_URL,
+    })
+  }
+  return aiClient
 }
 
 /**
- * evaluateSkillSubmission
- * Reviews a student's submission text and gives a score + feedback.
- * Used when an admin reviews a submitted skill verification.
+ * generateLearningBrief
  *
- * @param {string} skill - The skill being verified
- * @param {string} brief - The original project brief
- * @param {string} submission - The student's submitted work/description
- * @returns {Promise<{score: number, feedback: string, recommendation: 'approve'|'reject'}>}
+ * Generates a UNIQUE mini project brief for a student module attempt.
+ * Called every time a student clicks "Start Module" — must be different each time.
+ *
+ * @param {string} skillName       — e.g. "React", "Figma", "Blog Writing"
+ * @param {string} skillCategory   — e.g. "tech", "design", "content"
+ * @param {string} difficultyLevel — "rookie" | "skilled" | "expert"
+ * @param {number} deadlineHours   — 24 | 48 | 72
+ *
+ * @returns {Promise<{
+ *   project_title: string,
+ *   client_context: string,
+ *   task_description: string,
+ *   deliverables: string[],
+ *   evaluation_hints: string
+ * }>}
  */
-export async function evaluateSkillSubmission(skill, brief, submission) {
-  const completion = await groq.chat.completions.create({
-    model: MODEL,
+export async function generateLearningBrief(skillName, skillCategory, difficultyLevel, deadlineHours) {
+  const systemPrompt = `You are a project brief generator for KaajerBazar, a student freelance platform in Bangladesh. Your job is to generate creative, unique, practical mini project briefs for students to prove their skills.
+
+Rules you must follow:
+1. Every brief must be completely unique. Do not repeat the same project idea.
+2. The project must be realistic for a Bangladeshi university student to complete.
+3. The project must be specific — give a real fictional client name, a real context, and clear deliverables.
+4. Do NOT generate generic templates. No "build a to-do app" or "create a sample website". Give it a real story.
+5. The brief must be completable within the time limit given.
+6. Always write in clear, simple English that a student can understand.
+
+Output format — respond with a JSON object only, no extra text:
+{
+  "project_title": "Short title of the project",
+  "client_context": "1-2 sentences about the fictional client and their situation",
+  "task_description": "3-5 sentences of exactly what the student must build or create",
+  "deliverables": ["item 1", "item 2", "item 3"],
+  "evaluation_hints": "1-2 sentences on what makes a good submission for admin reference"
+}`
+
+  const userPrompt = `Generate a unique project brief for the following:
+Skill: ${skillName}
+Category: ${skillCategory}
+Level: ${difficultyLevel}
+Time limit: ${deadlineHours} hours
+
+Make sure this project is different from any typical ${skillName} beginner project. Surprise the student with a specific, real-world scenario.`
+
+  const AI_MODEL = process.env.AI_BRIEF_MODEL || 'llama-3.1-8b-instant'
+  const ai = getAI()
+
+  const completion = await ai.chat.completions.create({
+    model: AI_MODEL,
     messages: [
-      {
-        role: 'system',
-        content: `You are a technical reviewer for KaajerBazar. Evaluate skill verification submissions fairly and objectively.
-Respond ONLY with valid JSON in this exact format:
-{"score": <0-100>, "feedback": "<2-3 sentences>", "recommendation": "<approve or reject>"}`,
-      },
-      {
-        role: 'user',
-        content: `Skill being verified: ${skill}
-        
-Original brief:
-${brief}
-
-Student's submission:
-${submission}
-
-Evaluate this submission and respond with JSON only.`,
-      },
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userPrompt   },
     ],
-    temperature: 0.3,
-    max_tokens: 256,
+    // High temperature = maximum variety; every call should produce a genuinely different brief
+    temperature: 0.95,
+    max_tokens:  800,
   })
 
+  const raw = completion.choices[0].message.content?.trim() ?? ''
+
   try {
-    return JSON.parse(completion.choices[0].message.content)
-  } catch {
-    // Fallback if model doesn't return valid JSON
+    // Strip markdown code fences if the model wraps the JSON
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+    const parsed = JSON.parse(cleaned)
+
+    // Validate required fields are present
+    if (!parsed.project_title || !parsed.task_description || !Array.isArray(parsed.deliverables)) {
+      throw new Error('Missing required fields in AI response')
+    }
+
     return {
-      score: 50,
-      feedback: 'Could not parse AI evaluation. Please review manually.',
-      recommendation: 'reject',
+      project_title:    parsed.project_title,
+      client_context:   parsed.client_context   || '',
+      task_description: parsed.task_description,
+      deliverables:     parsed.deliverables,
+      evaluation_hints: parsed.evaluation_hints || '',
+    }
+  } catch (err) {
+    console.error('[generateLearningBrief] Failed to parse AI response:', err)
+    console.error('[generateLearningBrief] Raw AI output:', raw)
+
+    // Fallback: return a structured placeholder so the module can still start
+    // The admin will see this and can flag for retry
+    return {
+      project_title:    `${skillName} — ${difficultyLevel.charAt(0).toUpperCase() + difficultyLevel.slice(1)} Challenge`,
+      client_context:   'A local Bangladeshi startup needs your help with a time-sensitive project.',
+      task_description: `Demonstrate your ${skillName} skills by building a small but functional project that solves a real problem. Focus on clean code, good UX, and clear documentation.`,
+      deliverables:     ['Working project files', 'Brief description of what you built', 'Any relevant screenshots or demo links'],
+      evaluation_hints: 'Check for code quality, completeness of deliverables, and whether the student demonstrated core skill competency.',
     }
   }
 }
-
-

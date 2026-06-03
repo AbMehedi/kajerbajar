@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { Mail, Lock, User, ArrowRight, GraduationCap, Building2 } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ── Field definitions ──────────────────────────────────────────────────────────
 const STUDENT_FIELDS = [
@@ -61,19 +62,19 @@ function RoleCard({ role, activeRole, onSelect }) {
       className={`flex-1 flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${
         active
           ? 'border-[hsl(var(--kb-brand-500))] bg-[hsl(var(--kb-brand-500))/0.12] ring-2 ring-[hsl(var(--kb-brand-500))/0.25]'
-          : 'border-white/15 bg-white/3 hover:border-[hsl(var(--kb-brand-500))/0.4] hover:bg-white/5'
+          : 'border-[hsl(var(--kb-border))] bg-[hsl(var(--kb-surface-800))] hover:border-[hsl(var(--kb-brand-500))/0.4] hover:bg-[hsl(var(--kb-surface-700))]'
       }`}
     >
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-        active ? 'bg-[hsl(var(--kb-brand-500))/0.18] text-[hsl(var(--kb-brand-400))]' : 'bg-white/8 text-slate-400'
+        active ? 'bg-[hsl(var(--kb-brand-500))/0.18] text-[hsl(var(--kb-brand-500))]' : 'bg-[hsl(var(--kb-surface-700))] text-[hsl(var(--kb-text-secondary))]'
       }`}>
         <Icon className="w-4 h-4" />
       </div>
       <div>
-        <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-300'}`}>
+        <p className={`text-sm font-semibold ${active ? 'text-[hsl(var(--kb-text-primary))]' : 'text-[hsl(var(--kb-text-secondary))]'}`}>
           {role.title}
         </p>
-        <p className="text-xs text-slate-500 leading-snug mt-0.5">{role.desc}</p>
+        <p className="text-xs text-[hsl(var(--kb-text-muted))] leading-snug mt-0.5">{role.desc}</p>
       </div>
     </button>
   )
@@ -84,11 +85,11 @@ function FieldInput({ id, type, value, onChange, placeholder, required, min, max
   return (
     <motion.div variants={itemVariants}>
       {label && (
-        <label htmlFor={id} className="block text-slate-300 text-sm mb-1.5">{label}</label>
+        <label htmlFor={id} className="block text-[hsl(var(--kb-text-secondary))] text-sm mb-1.5">{label}</label>
       )}
       <div className="relative">
         {Icon && (
-          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--kb-text-muted))] pointer-events-none" />
         )}
         <input
           id={id}
@@ -106,11 +107,10 @@ function FieldInput({ id, type, value, onChange, placeholder, required, min, max
   )
 }
 
-// ── Brand panel ────────────────────────────────────────────────────────────────
 function BrandPanel() {
   return (
     <div
-      className="hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
+      className="dark hidden lg:flex lg:w-[42%] relative flex-col items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(145deg, hsl(220 26% 10%) 0%, hsl(220 30% 6%) 60%, hsl(42 40% 12%) 100%)' }}
     >
       {/* Orbs */}
@@ -237,7 +237,11 @@ export default function RegisterPage() {
       <BrandPanel />
 
       {/* ── Right: Form panel ── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 overflow-y-auto relative">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -246,25 +250,25 @@ export default function RegisterPage() {
         >
           {/* Mobile brand header */}
           <motion.div variants={itemVariants} className="text-center mb-8 lg:hidden">
-            <h1 className="text-2xl font-bold text-white">কাজের বাজার</h1>
-            <p className="text-[hsl(var(--kb-brand-400))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
+            <h1 className="text-2xl font-bold text-[hsl(var(--kb-text-primary))]">কাজের বাজার</h1>
+            <p className="text-[hsl(var(--kb-brand-500))] mt-1 text-sm">KaajerBazar — Work Marketplace</p>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-white mb-1">Create your account</h2>
-            <p className="text-slate-400 text-sm mb-6">Join thousands of students and companies already on the platform.</p>
+            <h2 className="text-2xl font-bold text-[hsl(var(--kb-text-primary))] mb-1">Create your account</h2>
+            <p className="text-[hsl(var(--kb-text-secondary))] text-sm mb-6">Join thousands of students and companies already on the platform.</p>
           </motion.div>
 
           {/* Role card selector */}
           <motion.div variants={itemVariants}>
-            <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-3">I am a…</p>
+            <p className="text-[hsl(var(--kb-text-muted))] text-xs uppercase tracking-widest font-semibold mb-3">I am a…</p>
             <div className="flex gap-3 mb-6">
               {ROLES.map((r) => (
                 <RoleCard key={r.key} role={r} activeRole={role} onSelect={setRole} />
               ))}
             </div>
           </motion.div>
-
+          
           {error && (
             <motion.p variants={itemVariants} className="badge-error block mb-5 p-3 text-sm">
               {error}
@@ -366,9 +370,9 @@ export default function RegisterPage() {
             </motion.div>
           </form>
 
-          <motion.p variants={itemVariants} className="text-center text-slate-400 text-sm mt-6">
+          <motion.p variants={itemVariants} className="text-center text-[hsl(var(--kb-text-secondary))] text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
+            <Link href="/login" className="text-[hsl(var(--kb-brand-600))] dark:text-[hsl(var(--kb-brand-400))] hover:text-[hsl(var(--kb-brand-700))] dark:hover:text-[hsl(var(--kb-brand-500))] font-medium transition-colors">
               Sign in
             </Link>
           </motion.p>

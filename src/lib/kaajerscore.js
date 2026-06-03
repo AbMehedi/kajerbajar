@@ -10,6 +10,7 @@
 // Stored in student_profiles.kaajerscore as a decimal.
 
 import { createServiceRoleClient } from '@/lib/supabase-server'
+import { evaluateStudentBadge } from '@/lib/badges'
 
 /**
  * Recalculate and persist the KaajerScore for a given student.
@@ -21,19 +22,24 @@ import { createServiceRoleClient } from '@/lib/supabase-server'
 export async function recalculateKaajerScore(studentId) {
   const adminClient = createServiceRoleClient()
   try {
-    // ── Component 1: Skill Verification Average (30%) ───────────────────────
-    // Count ALL closed verifications (approved + rejected) and approved ones.
-    const { data: verifications } = await adminClient
-      .from('skill_verifications')
-      .select('status')
+    // ── Component 1: Verified Skill Score (30%) ─────────────────────────────────────
+    // Count verified skills from the Learning Module system.
+    // Score = (verified skill count / TARGET) * 100, capped at 100.
+    // TARGET = 10 unique verified skills at any level = full score.
+    //
+    // NOTE for future match-score algorithm (calculateMatchScore):
+    //   If a student has a skill in verified_skills, apply a 1.5x weight multiplier
+    //   vs. 1.0x for self-claimed (unverified) skills. Final score must be capped at 100%.
+    const VERIFIED_SKILL_TARGET = 10
+    const { data: verifiedSkillsData } = await adminClient
+      .from('verified_skills')
+      .select('id')
       .eq('student_id', studentId)
-      .in('status', ['approved', 'rejected'])
 
-    const totalClosed = verifications?.length ?? 0
-    const totalApproved = verifications?.filter((v) => v.status === 'approved').length ?? 0
-
-    // Skill component: 0–100 (percentage of closed verifications that were approved)
-    const skillScore = totalClosed > 0 ? (totalApproved / totalClosed) * 100 : null
+    const verifiedCount = verifiedSkillsData?.length ?? 0
+    const skillScore = verifiedCount > 0
+      ? Math.min(100, (verifiedCount / VERIFIED_SKILL_TARGET) * 100)
+      : null
 
     // ── Component 2: Average Project Ratings Received (50%) ──────────────────
     // Only include unlocked reviews (i.e., projects where the student has also reviewed).
@@ -109,6 +115,9 @@ export async function recalculateKaajerScore(studentId) {
     if (error) {
       console.error('[recalculateKaajerScore] DB update error:', error)
     }
+
+    // ── Evaluate Marketplace Badge ───────────────────────────────────────────
+    await evaluateStudentBadge(studentId)
 
     return { finalScore, skillScore, ratingScore, completionScore }
   } catch (err) {

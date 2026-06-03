@@ -4,10 +4,9 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 
-import SkillBadges from "./SkillBadges";
 import DashboardShell from "@/components/layout/DashboardShell";
 import StatCard from "@/components/ui/StatCard";
-import { Target, Wallet, GraduationCap, ArrowRight, FlaskConical, Award, ShieldCheck, Download, User } from "lucide-react";
+import { Target, Wallet, GraduationCap, ArrowRight, FlaskConical, Award, ShieldCheck, Download, User, BookOpen, Star } from "lucide-react";
 import Link from "next/link";
 import ProjectHistoryClient from "./ProjectHistoryClient";
 
@@ -29,10 +28,11 @@ export default async function StudentDashboard() {
     { data: profile },
     { data: studentProfile },
     { data: myApplications },
-    { data: verifications },
     { data: reviews },
     { data: myReviews },
     { data: certificates },
+    { data: verifiedSkills },
+    { data: studentBadge },
   ] = await Promise.all([
     supabase
       .from("users_profiles")
@@ -53,12 +53,6 @@ export default async function StudentDashboard() {
       .order("created_at", { ascending: false }),
 
     supabase
-      .from("skill_verifications")
-      .select("id, skill_category, status, ai_brief, submission_text, submission_file_url, submitted_at, admin_feedback, created_at")
-      .eq("student_id", user.id)
-      .order("created_at", { ascending: false }),
-      
-    supabase
       .from("project_reviews")
       .select("project_id, rating, comment, created_at, reviewer:users_profiles!reviewer_id(full_name)")
       .eq("reviewee_id", user.id)
@@ -73,6 +67,23 @@ export default async function StudentDashboard() {
       .from("certificates")
       .select("id, project_id, issued_at")
       .eq("student_id", user.id),
+
+    // New: verified skills from the Learning Module system
+    supabase
+      .from("verified_skills")
+      .select("id, skill_name, skill_category, level, earned_at")
+      .eq("student_id", user.id)
+      .order("earned_at", { ascending: false }),
+
+    // New: active marketplace badge (if any)
+    supabase
+      .from("student_badges")
+      .select("badge_type, is_active, awarded_at")
+      .eq("student_id", user.id)
+      .eq("is_active", true)
+      .order("awarded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (profile?.role !== "student") redirect("/unauthorized");
@@ -82,6 +93,20 @@ export default async function StudentDashboard() {
   const feedbackCount = reviews?.length || 0;
   
   const unlockedProjectIds = new Set(myReviews?.map(r => r.project_id) || [])
+
+  // Verified skills helpers
+  const skills = verifiedSkills ?? []
+  const LEVEL_COLORS = {
+    rookie:  'bg-green-500/15 text-green-300 border-green-500/30',
+    skilled: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+    expert:  'bg-purple-500/15 text-purple-300 border-purple-500/30',
+  }
+  const BADGE_LABELS = {
+    rising_talent:   { label: '🌟 Rising Talent',   color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+    top_rated:       { label: '⭐ Top Rated',        color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+    top_rated_plus:  { label: '🏆 Top Rated Plus',  color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+  }
+  const activeBadge = studentBadge ?? null
 
   return (
     <DashboardShell
@@ -98,7 +123,14 @@ export default async function StudentDashboard() {
               {profile?.full_name?.charAt(0) || 'S'}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white mb-1">{profile?.full_name}</h1>
+              <div className="flex items-center gap-3 flex-wrap mb-1">
+                <h1 className="text-3xl font-bold text-white">{profile?.full_name}</h1>
+                {activeBadge && (
+                  <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${BADGE_LABELS[activeBadge.badge_type]?.color ?? 'bg-white/10 text-white border-white/20'}`}>
+                    {BADGE_LABELS[activeBadge.badge_type]?.label ?? activeBadge.badge_type}
+                  </span>
+                )}
+              </div>
               <p className="text-purple-400 font-medium">@{studentProfile?.username}</p>
               <p className="text-slate-400 text-sm mt-1">{studentProfile?.university ?? 'No university added'}</p>
 
@@ -177,14 +209,14 @@ export default async function StudentDashboard() {
             <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
           </Link>
           <Link
-            href="/student/skill-test"
+            href="/student/learn"
             className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-purple-500/40 transition-colors group"
           >
             <div>
-              <p className="text-white font-semibold text-sm">Submit a Skill</p>
-              <p className="text-slate-500 text-xs mt-0.5">Get a verified badge</p>
+              <p className="text-white font-semibold text-sm">Learn & Verify</p>
+              <p className="text-slate-500 text-xs mt-0.5">Earn verified skill badges</p>
             </div>
-            <FlaskConical className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+            <BookOpen className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
           </Link>
           <Link
             href="/search"
@@ -195,8 +227,63 @@ export default async function StudentDashboard() {
           </Link>
         </div>
 
-        {/* ── Skill Badges ── */}
-        <SkillBadges verifications={verifications ?? []} />
+        {/* ── Verified Skills Section ── */}
+        <div className="glass rounded-2xl border border-white/10 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-bold flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-purple-400" />
+              Verified Skills
+              {skills.length > 0 && (
+                <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">
+                  {skills.length}
+                </span>
+              )}
+            </h2>
+            <Link href="/student/learn" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+              Go to Learn →
+            </Link>
+          </div>
+          {skills.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-slate-500 text-sm">No verified skills yet.</p>
+              <Link href="/student/learn" className="text-purple-400 text-sm hover:underline mt-1 inline-block">
+                Start a learning module →
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((s) => (
+                <span key={s.id}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${
+                    LEVEL_COLORS[s.level] ?? 'bg-white/10 text-white border-white/20'
+                  }`}
+                >
+                  {s.skill_name}
+                  <span className="opacity-60 text-xs capitalize">— {s.level}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── New Dashboard Cards: Learning Module ── */}
+        <div className="grid grid-cols-1 gap-4">
+          {/* Card 1: Learning Module Quick Access */}
+          <Link href="/student/learn" className="glass rounded-xl border border-white/10 hover:border-purple-500/40 p-5 transition-colors group flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                <BookOpen className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-semibold">Learning Modules</h3>
+                <p className="text-slate-500 text-sm">
+                  <span className="text-white font-bold">{skills.length}</span> verified skills
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+          </Link>
+        </div>
 
         {/* ── Certificates ── */}
         <div className="glass rounded-2xl border border-white/10 p-6 sm:p-8">

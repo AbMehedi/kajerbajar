@@ -15,22 +15,21 @@ export default function MilestoneTracker({ projectId, role }) {
   const isCompany = role === 'company'
 
   useEffect(() => {
+    async function fetchMilestones() {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/projects/${projectId}/milestones`)
+        if (!res.ok) throw new Error('Failed to fetch milestones')
+        const data = await res.json()
+        setMilestones(data.milestones || [])
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchMilestones()
   }, [projectId])
-
-  async function fetchMilestones() {
-    try {
-      setLoading(true)
-      const res = await fetch(`/api/projects/${projectId}/milestones`)
-      if (!res.ok) throw new Error('Failed to fetch milestones')
-      const data = await res.json()
-      setMilestones(data.milestones || [])
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function addMilestone(e) {
     e.preventDefault()

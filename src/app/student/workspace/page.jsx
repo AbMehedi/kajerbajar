@@ -179,7 +179,7 @@ export default async function StudentWorkspaceHub() {
 
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('full_name, role')
+    .select("full_name, role, avatar_url")
     .eq('id', user.id)
     .single()
 
@@ -231,7 +231,7 @@ export default async function StudentWorkspaceHub() {
   const totalActive = inProgress.length
 
   return (
-    <DashboardShell
+    <DashboardShell avatarUrl={profile?.avatar_url}
       role="student"
       fullName={profile?.full_name ?? ''}
       activePath="/student/workspace"

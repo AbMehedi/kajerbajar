@@ -35,6 +35,7 @@ export async function POST(request) {
 
     const effectiveUserId = user.id
     const effectiveEmail = user.email || email || null
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
 
     // 0. Update user metadata with role (for JWT-based middleware checks)
     const { error: metadataError } = await supabase.auth.admin.updateUserById(
@@ -53,7 +54,8 @@ export async function POST(request) {
         id: effectiveUserId,
         email: effectiveEmail,
         role,
-        full_name: full_name || effectiveEmail,
+        full_name: full_name || user.user_metadata?.full_name || effectiveEmail,
+        avatar_url: avatarUrl,
       })
 
     if (profileError) {

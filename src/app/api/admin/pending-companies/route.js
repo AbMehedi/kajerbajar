@@ -16,11 +16,13 @@ export async function GET() {
   if (auth.errorResponse) return auth.errorResponse
 
   const { supabase } = auth
+  const { createServiceRoleClient } = require('@/lib/supabase-server')
+  const serviceRoleClient = createServiceRoleClient()
   
   // ═══════════════════════════════════════════════════════════════════
   // Step 3: Fetch pending companies with their user info
   // ═══════════════════════════════════════════════════════════════════
-  const { data: pendingCompanies, error: fetchError } = await supabase
+  const { data: pendingCompanies, error: fetchError } = await serviceRoleClient
     .from('company_profiles')
     .select(`
       id,

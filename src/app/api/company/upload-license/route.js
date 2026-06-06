@@ -48,7 +48,10 @@ export async function POST(request) {
   // ═══════════════════════════════════════════════════════════════════
   // Step 4: Update company profile with license URL
   // ═══════════════════════════════════════════════════════════════════
-  const { data: updatedProfile, error: updateError } = await supabase
+  const { createServiceRoleClient } = require('@/lib/supabase-server')
+  const serviceRoleClient = createServiceRoleClient()
+  
+  const { data: updatedProfile, error: updateError } = await serviceRoleClient
     .from('company_profiles')
     .update({
       trade_license_url: file_url,

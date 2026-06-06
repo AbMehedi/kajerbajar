@@ -45,7 +45,7 @@ export default async function StudentWorkspacePage({ params }) {
 
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('full_name, role')
+    .select("full_name, role, avatar_url")
     .eq('id', user.id)
     .single()
 
@@ -95,7 +95,7 @@ export default async function StudentWorkspacePage({ params }) {
   const studentPayout = Math.round((project.budget_bdt ?? 0) * (1 - COMMISSION_RATE) * 100) / 100
 
   return (
-    <DashboardShell
+    <DashboardShell avatarUrl={profile?.avatar_url}
       role="student"
       fullName={profile?.full_name ?? ''}
       activePath="/student/workspace"

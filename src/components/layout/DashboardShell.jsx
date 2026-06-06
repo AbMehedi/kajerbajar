@@ -81,6 +81,7 @@ export default function DashboardShell({
   children,
   role,
   fullName,
+  avatarUrl,
   activePath,
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -117,11 +118,13 @@ export default function DashboardShell({
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         navItems={navItems}
+        activePath={activePath}
+        fullName={fullName}
+        avatarUrl={avatarUrl}
+        role={role}
         roleLabel={roleLabel}
         roleBadgeClass={roleBadgeClass}
-        fullName={fullName}
         initials={initials}
-        activePath={activePath}
       />
 
       {/* Mobile top bar */}
@@ -142,9 +145,13 @@ export default function DashboardShell({
               unreadCount={unreadCount}
               setUnreadCount={setUnreadCount}
             />
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-xs font-semibold text-white flex items-center justify-center">
-              {initials}
-            </div>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={fullName} className="h-9 w-9 rounded-full object-cover border border-white/10" />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-xs font-semibold text-white flex items-center justify-center">
+                {initials}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -204,10 +211,14 @@ export default function DashboardShell({
 
           <div className="mt-6 border-t border-[hsl(var(--kb-border))] pt-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-sm font-semibold text-white flex items-center justify-center">
-                {initials}
-              </div>
-              <div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={fullName} className="h-10 w-10 rounded-full object-cover border border-white/10" />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-sm font-semibold text-white flex items-center justify-center">
+                  {initials}
+                </div>
+              )}
+              <div className="flex flex-col">
                 <div className="text-sm text-[hsl(var(--kb-text-primary))]">
                   {fullName || "Kaajer User"}
                 </div>

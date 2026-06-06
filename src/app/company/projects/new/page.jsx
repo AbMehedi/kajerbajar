@@ -46,7 +46,7 @@ export default async function PostProjectPage() {
   const isVerified = companyProfile?.verification_status === 'verified'
 
   return (
-    <DashboardShell
+    <DashboardShell avatarUrl={profile?.avatar_url}
       role="company"
       fullName={companyProfile?.legal_name ?? profile?.full_name ?? ""}
       activePath="/company/projects/new"

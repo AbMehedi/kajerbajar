@@ -36,6 +36,7 @@ export default async function SearchPage({ searchParams }) {
       id, company_name:legal_name, industry, description,
       users_profiles!company_profiles_id_fkey(full_name, avatar_url)
     `)
+    .eq('verification_status', 'verified')
     
   // Fetch reviews to calculate average ratings for companies
   const { data: reviews } = await adminClient
@@ -51,6 +52,7 @@ export default async function SearchPage({ searchParams }) {
     return {
       ...c,
       full_name: c.users_profiles?.full_name,
+      avatar_url: c.users_profiles?.avatar_url,
       rating: avgRating,
       reviewCount: compReviews.length
     }
@@ -58,7 +60,8 @@ export default async function SearchPage({ searchParams }) {
   
   const students = studentsRaw?.map(s => ({
     ...s,
-    full_name: s.users_profiles?.full_name
+    full_name: s.users_profiles?.full_name,
+    avatar_url: s.users_profiles?.avatar_url
   })) || []
 
   const Shell = role ? DashboardShell : PublicShell

@@ -16,7 +16,7 @@ export default async function EditStudentProfilePage() {
 
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('full_name, role')
+    .select('full_name, role, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -43,6 +43,7 @@ export default async function EditStudentProfilePage() {
 
   const initialData = {
     full_name: profile.full_name || '',
+    avatar_url: profile.avatar_url || '',
     username: student?.username || '',
     university: student?.university || '',
     bio: student?.bio || '',
@@ -52,6 +53,7 @@ export default async function EditStudentProfilePage() {
 
   return (
     <DashboardShell
+      avatarUrl={profile?.avatar_url}
       role="student"
       fullName={profile?.full_name ?? ''}
       activePath="/student/profile"

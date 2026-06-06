@@ -36,7 +36,7 @@ export default async function StudentDashboard() {
   ] = await Promise.all([
     supabase
       .from("users_profiles")
-      .select("full_name, role, email")
+      .select("full_name, role, email, avatar_url")
       .eq("id", user.id)
       .single(),
 
@@ -78,13 +78,36 @@ export default async function StudentDashboard() {
     // New: active marketplace badge (if any)
     supabase
       .from("student_badges")
-      .select("badge_type, is_active, awarded_at")
+      .select("badge_type, is_active")
       .eq("student_id", user.id)
       .eq("is_active", true)
       .order("awarded_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
   ]);
+
+  // Resilient fetch for new columns in case of PGRST204 (stale schema cache)
+  let about_text = null;
+  let portfolio_url = null;
+  try {
+    const { data: extraData, error: extraError } = await supabase
+      .from("student_profiles")
+      .select("about_text, portfolio_url")
+      .eq("id", user.id)
+      .single();
+    if (!extraError && extraData) {
+      about_text = extraData.about_text;
+      portfolio_url = extraData.portfolio_url;
+    }
+  } catch (e) {
+    console.log("Could not fetch new student_profile columns:", e);
+  }
+
+  // Merge extra data
+  if (studentProfile) {
+    studentProfile.about_text = about_text;
+    studentProfile.portfolio_url = portfolio_url;
+  };
 
   if (profile?.role !== "student") redirect("/unauthorized");
 
@@ -109,7 +132,7 @@ export default async function StudentDashboard() {
   const activeBadge = studentBadge ?? null
 
   return (
-    <DashboardShell
+    <DashboardShell avatarUrl={profile?.avatar_url}
       role="student"
       fullName={profile?.full_name ?? ""}
       activePath="/student/dashboard"
@@ -119,9 +142,13 @@ export default async function StudentDashboard() {
         {/* ── Profile Header ── */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative">
           <div className="flex items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-purple-500/20 shrink-0">
-              {profile?.full_name?.charAt(0) || 'S'}
-            </div>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-purple-500/20 shrink-0 border border-white/10" />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-purple-500/20 shrink-0">
+                {profile?.full_name?.charAt(0) || 'S'}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-3 flex-wrap mb-1">
                 <h1 className="text-3xl font-bold text-white">{profile?.full_name}</h1>
@@ -142,9 +169,17 @@ export default async function StudentDashboard() {
             </div>
           </div>
 
-          <Link href="/student/profile/edit" className="shrink-0 px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-xl transition-colors md:absolute right-0 top-0">
-            Edit Profile
-          </Link>
+          <div className="flex flex-col gap-3 shrink-0 md:absolute right-0 top-0 items-end">
+            <Link href="/student/profile/edit" className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-xl transition-colors">
+              Edit Profile
+            </Link>
+            {studentProfile?.portfolio_url && (
+              <a href={studentProfile.portfolio_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 border border-white/20 hover:bg-white/5 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                Portfolio
+              </a>
+            )}
+          </div>
         </div>
 
         {/* ── About Me ── */}

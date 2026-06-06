@@ -190,7 +190,7 @@ export default async function CompanyWorkspaceHub() {
 
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('full_name, role')
+    .select("full_name, role, avatar_url")
     .eq('id', user.id)
     .single()
 
@@ -215,10 +215,10 @@ export default async function CompanyWorkspaceHub() {
 
   if (!projects || projects.length === 0) {
     return (
-      <DashboardShell
+      <DashboardShell avatarUrl={profile?.avatar_url}
         role="company"
         fullName={companyProfile?.legal_name ?? profile?.full_name ?? ''}
-        activePath="/company/workspace"
+      activePath="/company/workspace"
       >
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="flex items-center gap-3 mb-10">

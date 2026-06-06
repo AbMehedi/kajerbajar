@@ -1,5 +1,5 @@
 // src/app/admin/company-queue/page.jsx
-import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import CompanyVerificationQueue from "../dashboard/CompanyVerificationQueue";
@@ -19,14 +19,14 @@ export default async function AdminCompanyQueue() {
 
   const { data: profile } = await supabase
     .from("users_profiles")
-    .select("full_name, role")
+    .select("full_name, role, avatar_url")
     .eq("id", user.id)
     .single();
 
   if (profile?.role !== "admin") redirect("/unauthorized");
 
-  // Use admin client (service role) to bypass RLS on company_profiles.
-  const adminSupabase = await createAdminSupabaseClient();
+  // Use pure service role client to bypass RLS on company_profiles.
+  const adminSupabase = createServiceRoleClient();
 
   const { data: pendingCompanies } = await adminSupabase
     .from("company_profiles")
@@ -47,7 +47,7 @@ export default async function AdminCompanyQueue() {
     .order("license_uploaded_at", { ascending: true });
 
   return (
-    <DashboardShell
+    <DashboardShell avatarUrl={profile?.avatar_url}
       role="admin"
       fullName={profile?.full_name ?? ""}
       activePath="/admin/company-queue"

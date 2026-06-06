@@ -37,16 +37,21 @@ export default async function CompanyPublicProfilePage({ params }) {
   
   let role = null
   let viewerName = ''
+  let viewerAvatar = null
   if (user) {
-    const { data: viewerProfile } = await supabase.from('users_profiles').select('role, full_name').eq('id', user.id).single()
+    const { data: viewerProfile } = await supabase.from('users_profiles').select('role, full_name, avatar_url').eq('id', user.id).single()
     role = viewerProfile?.role
     viewerName = viewerProfile?.full_name ?? ''
+    viewerAvatar = viewerProfile?.avatar_url ?? null
   }
 
   // Fetch company data using adminClient to bypass RLS
   const { data: company } = await adminClient
     .from('company_profiles')
-    .select('*')
+    .select(`
+      *,
+      users_profiles!company_profiles_id_fkey(avatar_url)
+    `)
     .eq('id', id)
     .single()
 
@@ -73,7 +78,7 @@ export default async function CompanyPublicProfilePage({ params }) {
 
   const Shell = role ? DashboardShell : PublicShell
   const shellProps = role
-    ? { role, fullName: viewerName, activePath: null }
+    ? { role, fullName: viewerName, avatarUrl: viewerAvatar, activePath: null }
     : { activePath: null }
 
   return (
@@ -83,9 +88,13 @@ export default async function CompanyPublicProfilePage({ params }) {
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
-              {company.legal_name.charAt(0)}
-            </div>
+            {company.users_profiles?.avatar_url ? (
+              <img src={company.users_profiles.avatar_url} alt="Profile" className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-blue-500/20 shrink-0 border-2 border-white/10" />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
+                {company.legal_name.charAt(0)}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-3xl font-bold text-white">{company.legal_name}</h1>

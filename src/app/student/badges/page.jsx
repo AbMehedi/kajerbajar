@@ -81,7 +81,7 @@ export default async function BadgesPage() {
 
   const { data: profile } = await supabase
     .from('users_profiles')
-    .select('full_name, role')
+    .select("full_name, role, avatar_url")
     .eq('id', user.id)
     .single()
 
@@ -102,7 +102,8 @@ export default async function BadgesPage() {
   const currentTier = userBadge?.badge_type ? badgeMap[userBadge.badge_type] : 'none'
 
   return (
-    <DashboardShell role={profile?.role} fullName={profile?.full_name} activePath="/student/badges">
+    <DashboardShell avatarUrl={profile?.avatar_url} role={profile?.role} fullName={profile?.full_name}
+      activePath="/student/badges">
       <div className="max-w-5xl mx-auto px-6 py-10">
         
         {/* Header */}

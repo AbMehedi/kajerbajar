@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import DashboardShell from '@/components/layout/DashboardShell'
 import PublicShell from '@/components/layout/PublicShell'
 import CopyButton from '@/components/CopyButton'
-import { Wallet, Star, Briefcase, CheckCircle, Award, ShieldCheck, User } from 'lucide-react'
+import { Wallet, Star, Briefcase, CheckCircle, Award, ShieldCheck, User, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 
 export async function generateMetadata({ params }) {
@@ -44,10 +44,12 @@ export default async function StudentPublicProfilePage({ params }) {
   
   let role = null
   let viewerName = ''
+  let viewerAvatar = null
   if (user) {
-    const { data: viewerProfile } = await supabase.from('users_profiles').select('role, full_name').eq('id', user.id).single()
+    const { data: viewerProfile } = await supabase.from('users_profiles').select('role, full_name, avatar_url').eq('id', user.id).single()
     role = viewerProfile?.role
     viewerName = viewerProfile?.full_name ?? ''
+    viewerAvatar = viewerProfile?.avatar_url ?? null
   }
 
   const [
@@ -60,7 +62,7 @@ export default async function StudentPublicProfilePage({ params }) {
   ] = await Promise.all([
     adminClient.from('student_profiles').select(`
       *,
-      users_profiles!student_profiles_id_fkey(full_name, role)
+      users_profiles!student_profiles_id_fkey(full_name, avatar_url, role)
     `).eq('id', id).single(),
     adminClient.from('applications').select(`
         id,
@@ -68,7 +70,7 @@ export default async function StudentPublicProfilePage({ params }) {
       `).eq('student_id', id).eq('status', 'selected'),
     adminClient.from('project_reviews').select('project_id, rating, comment, created_at, reviewer:users_profiles!reviewer_id(full_name)')
       .eq('reviewee_id', id).order('created_at', { ascending: false }),
-    adminClient.from('skill_verifications').select('status, skill_category').eq('student_id', id).eq('status', 'approved'),
+    adminClient.from('verified_skills').select('skill_name, skill_category, level').eq('student_id', id).order('earned_at', { ascending: false }),
     adminClient.from('certificates').select('id, project_id, issued_at').eq('student_id', id),
     adminClient.from('student_badges').select('badge_type, is_active').eq('student_id', id).eq('is_active', true).order('awarded_at', { ascending: false }).limit(1).maybeSingle()
   ])
@@ -84,12 +86,15 @@ export default async function StudentPublicProfilePage({ params }) {
     notFound()
   }
 
-  // Try fetching about_text if schema is updated
+  // Try fetching about_text and portfolio_url if schema is updated but cache is stale for *
   let aboutText = student?.about_text
   if (aboutText === undefined) {
     try {
-      const { data } = await adminClient.from('student_profiles').select('about_text').eq('id', id).single()
-      if (data?.about_text) aboutText = data.about_text
+      const { data } = await adminClient.from('student_profiles').select('about_text, portfolio_url').eq('id', id).single()
+      if (data) {
+        aboutText = data.about_text
+        student.portfolio_url = data.portfolio_url
+      }
     } catch(e) {}
   }
 
@@ -102,7 +107,7 @@ export default async function StudentPublicProfilePage({ params }) {
 
   const Shell = role ? DashboardShell : PublicShell
   const shellProps = role
-    ? { role, fullName: viewerName, activePath: null }
+    ? { role, fullName: viewerName, avatarUrl: viewerAvatar, activePath: null }
     : { activePath: null }
 
   const BADGE_LABELS = {
@@ -119,9 +124,13 @@ export default async function StudentPublicProfilePage({ params }) {
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-purple-500/20 shrink-0">
-              {(profile?.full_name ?? 'S').charAt(0)}
-            </div>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-24 h-24 rounded-2xl object-cover shadow-lg shadow-purple-500/20 shrink-0 border-2 border-white/10" />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg shadow-purple-500/20 shrink-0">
+                {profile?.full_name?.charAt(0) || 'S'}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-3 flex-wrap mb-1">
                 <h1 className="text-3xl font-bold text-white">{profile?.full_name ?? 'Student'}</h1>
@@ -175,7 +184,7 @@ export default async function StudentPublicProfilePage({ params }) {
               <div className="flex flex-wrap gap-2">
                 {verifications.map((v, idx) => (
                   <span key={idx} className="px-3 py-1 bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold rounded-full">
-                    {v.skill_category}
+                    {v.skill_name} <span className="opacity-70 font-normal">({v.level})</span>
                   </span>
                 ))}
               </div>
@@ -202,6 +211,16 @@ export default async function StudentPublicProfilePage({ params }) {
               <div>
                 <p className="text-2xl font-bold text-white">৳{(student?.wallet_balance ?? 0).toFixed(0)}</p>
                 <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Earned</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-t border-white/10 pt-4 mt-2">
+              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 shrink-0">
+                <MessageSquare className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{reviews?.length || 0}</p>
+                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Feedback Received</p>
               </div>
             </div>
           </div>

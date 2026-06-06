@@ -1,0 +1,159 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/ui/AvatarUpload'
+
+export default function EditCompanyProfileForm({ initialData }) {
+  const router = useRouter()
+  const [formData, setFormData] = useState(initialData)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleAvatarUpload = (url) => {
+    setFormData({ ...formData, avatar_url: url })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const res = await fetch('/api/company/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Failed to update profile')
+      
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/company/dashboard')
+        router.refresh()
+      }, 1500)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="glass rounded-2xl border border-invert/10 p-6 sm:p-8">
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm flex items-center gap-2">
+          ✅ Company profile updated successfully! Redirecting...
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="mb-8">
+          <AvatarUpload 
+            avatarUrl={formData.avatar_url} 
+            onUploadComplete={handleAvatarUpload} 
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-2">Legal Name</label>
+            <input
+              type="text"
+              name="legal_name"
+              value={formData.legal_name}
+              onChange={handleChange}
+              required
+              className="w-full bg-invert/5 border border-invert/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+              placeholder="e.g. Acme Corp"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-2">Username</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">@</span>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                className="w-full bg-invert/5 border border-invert/10 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                placeholder="acmecorp"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-2">Industry</label>
+            <input
+              type="text"
+              name="industry"
+              value={formData.industry}
+              onChange={handleChange}
+              className="w-full bg-invert/5 border border-invert/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+              placeholder="e.g. Technology"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-2">Website</label>
+            <input
+              type="url"
+              name="website"
+              value={formData.website}
+              onChange={handleChange}
+              className="w-full bg-invert/5 border border-invert/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+              placeholder="https://example.com"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-slate-300 text-sm font-medium mb-2">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows={4}
+            className="w-full bg-invert/5 border border-invert/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+            placeholder="Tell us about your company..."
+          />
+        </div>
+
+        <div className="pt-4 flex items-center gap-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
+          >
+            {loading ? 'Saving...' : 'Save Profile'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            disabled={loading}
+            className="px-6 py-2.5 bg-invert/5 hover:bg-invert/10 text-white font-medium rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

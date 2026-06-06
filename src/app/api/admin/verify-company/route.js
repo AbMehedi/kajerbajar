@@ -54,7 +54,10 @@ export async function POST(request) {
   // ═══════════════════════════════════════════════════════════════════
   // Step 4: Verify company exists and is pending
   // ═══════════════════════════════════════════════════════════════════
-  const { data: company, error: companyError } = await supabase
+  const { createServiceRoleClient } = require('@/lib/supabase-server')
+  const serviceRoleClient = createServiceRoleClient()
+
+  const { data: company, error: companyError } = await serviceRoleClient
     .from('company_profiles')
     .select('id, verification_status, legal_name')
     .eq('id', company_id)
@@ -93,7 +96,7 @@ export async function POST(request) {
         verified_by: user.id,
       }
   
-  const { error: updateError } = await supabase
+  const { error: updateError } = await serviceRoleClient
     .from('company_profiles')
     .update(updateData)
     .eq('id', company_id)

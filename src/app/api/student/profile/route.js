@@ -10,16 +10,20 @@ export async function PUT(request) {
     const { user } = auth
     const body = await request.json()
     
-    // We expect: full_name, username, bio, university, about_text, portfolio_url
-    const { full_name, username, bio, university, about_text, portfolio_url } = body
+    // We expect: full_name, avatar_url, username, bio, university, about_text, portfolio_url
+    const { full_name, avatar_url, username, bio, university, about_text, portfolio_url } = body
     
     const adminClient = await createAdminSupabaseClient()
 
-    // 1. Update users_profiles (full_name)
-    if (full_name) {
+    // 1. Update users_profiles (full_name, avatar_url)
+    const userUpdates = {}
+    if (full_name) userUpdates.full_name = full_name.trim()
+    if (avatar_url !== undefined) userUpdates.avatar_url = avatar_url
+
+    if (Object.keys(userUpdates).length > 0) {
       const { error: userError } = await adminClient
         .from('users_profiles')
-        .update({ full_name: full_name.trim() })
+        .update(userUpdates)
         .eq('id', user.id)
 
       if (userError) {
@@ -45,10 +49,11 @@ export async function PUT(request) {
         .eq('id', user.id)
         
       if (studentError) {
-        // Fallback for about_text column missing
-        if (studentError.code === '42703' && studentUpdates.about_text !== undefined) {
-          console.warn('[profile PUT] about_text column missing, retrying without it.')
+        // Fallback for about_text/portfolio_url column missing (PostgREST returns PGRST204)
+        if ((studentError.code === '42703' || studentError.code === 'PGRST204')) {
+          console.warn('[profile PUT] about_text/portfolio_url missing in schema, retrying without them.')
           delete studentUpdates.about_text
+          delete studentUpdates.portfolio_url
           const { error: retryError } = await adminClient
             .from('student_profiles')
             .update(studentUpdates)

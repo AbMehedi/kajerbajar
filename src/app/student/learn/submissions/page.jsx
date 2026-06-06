@@ -30,7 +30,7 @@ export default async function SubmissionsPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('users_profiles').select('full_name, role').eq('id', user.id).single()
+    .from('users_profiles').select("full_name, role, avatar_url").eq('id', user.id).single()
   if (profile?.role !== 'student') redirect('/unauthorized')
 
   const { data: submissions } = await supabase
@@ -46,7 +46,8 @@ export default async function SubmissionsPage() {
   const list = submissions ?? []
 
   return (
-    <DashboardShell role="student" fullName={profile?.full_name ?? ''} activePath="/student/learn">
+    <DashboardShell avatarUrl={profile?.avatar_url} role="student" fullName={profile?.full_name ?? ''}
+      activePath="/student/learn">
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
 
         {/* ── Header ── */}

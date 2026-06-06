@@ -14,6 +14,7 @@ export default function MobileSidebarDrawer({
   roleLabel,
   roleBadgeClass,
   fullName,
+  avatarUrl,
   initials,
   activePath,
 }) {
@@ -68,13 +69,19 @@ export default function MobileSidebarDrawer({
                 })}
               </nav>
 
-              <div className="mt-6 border-t border-white/10 pt-4">
+              <div className="mt-4 border-t border-white/10 pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-sm font-semibold text-white flex items-center justify-center">
-                    {initials}
-                  </div>
-                  <div>
-                    <div className="text-sm text-white">{fullName || 'Kaajer User'}</div>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={fullName} className="h-10 w-10 rounded-full object-cover border border-white/10" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--kb-brand-500))] to-[hsl(var(--kb-brand-700))] text-sm font-semibold text-white flex items-center justify-center">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <div className="text-sm font-medium text-white">
+                      {fullName || 'Kaajer User'}
+                    </div>
                     <div className="text-xs text-slate-400">{roleLabel}</div>
                   </div>
                 </div>

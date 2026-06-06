@@ -33,7 +33,7 @@ export default async function LearnHome() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('users_profiles').select('full_name, role').eq('id', user.id).single()
+    .from('users_profiles').select("full_name, role, avatar_url").eq('id', user.id).single()
   if (profile?.role !== 'student') redirect('/unauthorized')
 
   // Fetch verified skills
@@ -66,7 +66,8 @@ export default async function LearnHome() {
   }
 
   return (
-    <DashboardShell role="student" fullName={profile?.full_name ?? ''} activePath="/student/learn">
+    <DashboardShell avatarUrl={profile?.avatar_url} role="student" fullName={profile?.full_name ?? ''}
+      activePath="/student/learn">
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
 
         {/* ── Header ── */}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 export default function EditProfileForm({ initialData }) {
   const router = useRouter()
@@ -58,6 +59,14 @@ export default function EditProfileForm({ initialData }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Picture Upload */}
+        <div className="mb-6">
+          <AvatarUpload 
+            avatarUrl={formData.avatar_url} 
+            onUploadComplete={(url) => setFormData({ ...formData, avatar_url: url })} 
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-slate-300 text-sm font-medium mb-2">Full Name</label>

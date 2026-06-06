@@ -9,7 +9,7 @@ import DashboardShell from '@/components/layout/DashboardShell'
 import EmptyState from '@/components/ui/EmptyState'
 import StatCard from '@/components/ui/StatCard'
 import Link from 'next/link'
-import { CheckCircle, Circle, Clock, PlusCircle, Star, Briefcase, FileText, Building2 } from 'lucide-react'
+import { CheckCircle, Circle, Clock, PlusCircle, Star, Briefcase, FileText, Building2, ShieldCheck } from 'lucide-react'
 
 export const metadata = {
   title: 'Company Dashboard — KaajerBazar',
@@ -30,7 +30,7 @@ function VerificationProgressBar({ status }) {
     not_submitted: 0,
     pending:       1,
     rejected:      0,  // back to step 0 to re-submit
-    verified:      2,
+    verified:      3,  // mapped to 3 so all steps (idx < 3) are marked 'done'
   }[status] ?? 0
 
   return (
@@ -168,9 +168,16 @@ export default async function CompanyDashboard() {
             {companyProfile?.legal_name?.charAt(0) || 'C'}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">
-              {companyProfile?.legal_name}
-            </h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-white">
+                {companyProfile?.legal_name}
+              </h1>
+              {isVerified && (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                  <ShieldCheck className="w-3 h-3" /> Verified
+                </span>
+              )}
+            </div>
             <p className="text-slate-400 text-sm">{companyProfile?.industry ?? 'Industry not set'}</p>
           </div>
         </div>

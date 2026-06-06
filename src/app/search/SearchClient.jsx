@@ -75,8 +75,12 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           <Link href={`/profile/student/${student.id}`} key={student.id} className="group">
             <div className="h-full glass border border-white/10 rounded-2xl p-5 hover:border-purple-500/40 transition-all hover:bg-white/5">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xl">
-                  {student.full_name?.charAt(0) || 'S'}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xl overflow-hidden">
+                  {student.avatar_url ? (
+                    <img src={student.avatar_url} alt={student.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    student.full_name?.charAt(0) || 'S'
+                  )}
                 </div>
                 {student.kaajerscore ? (
                   <div className="px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-xs font-bold">
@@ -109,8 +113,12 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           <Link href={`/profile/company/${company.id}`} key={company.id} className="group">
             <div className="h-full glass border border-white/10 rounded-2xl p-5 hover:border-purple-500/40 transition-all hover:bg-white/5 flex flex-col">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold text-xl">
-                  {company.company_name?.charAt(0) || 'C'}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold text-xl overflow-hidden">
+                  {company.avatar_url ? (
+                    <img src={company.avatar_url} alt={company.company_name} className="w-full h-full object-cover" />
+                  ) : (
+                    company.company_name?.charAt(0) || 'C'
+                  )}
                 </div>
                 {company.rating ? (
                   <div className="flex items-center gap-1 px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-xs font-bold">

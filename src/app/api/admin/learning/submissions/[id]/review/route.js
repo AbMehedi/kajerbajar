@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server'
-import { createNotification } from '@/lib/server-notifications'
+import { notifyUser } from '@/lib/server-notifications'
 
 export async function POST(request, { params }) {
   const supabase = await createServerSupabaseClient()
@@ -102,13 +102,13 @@ export async function POST(request, { params }) {
       })
 
     // Notify student
-    await createNotification({
+    await notifyUser({
       userId:    studentId,
       type:      'skill_pass',
       title:     `🎉 Skill Verified: ${skillName} — ${capitalize(level)}!`,
       body:      `Congratulations! You passed the ${skillName} (${capitalize(level)}) module. Your verified skill has been added to your profile.`,
       data:      { link: '/student/learn/submissions' },
-      sendEmail: true,
+      priority:  'important',
     })
 
     return NextResponse.json({ message: 'Submission passed. Skill added to verified_skills.' })
@@ -136,23 +136,23 @@ export async function POST(request, { params }) {
 
     if (isLockout) {
       // 7-day lockout notification
-      await createNotification({
+      await notifyUser({
         userId:    studentId,
         type:      'skill_locked',
         title:     `🔒 ${skillName} — ${capitalize(level)} Locked for 7 Days`,
         body:      `You have made ${newAttemptNumber} failed attempts at ${skillName} — ${capitalize(level)}. This module is now locked for 7 days. Keep practicing and come back stronger!`,
         data:      { link: '/student/learn' },
-        sendEmail: true,
+        priority:  'important',
       })
     } else {
       // Standard fail notification (retry in 24h)
-      await createNotification({
+      await notifyUser({
         userId:    studentId,
         type:      'skill_fail',
         title:     `📝 ${skillName} Submission Needs Work`,
         body:      `Your ${skillName} — ${capitalize(level)} submission was not approved. ${feedback ? `Feedback: ${feedback}` : 'Review the brief and try again.'} You can retry after 24 hours.`,
         data:      { link: '/student/learn/submissions' },
-        sendEmail: false,
+        priority:  'normal',
       })
     }
 
@@ -180,13 +180,13 @@ export async function POST(request, { params }) {
       })
       .eq('id', submissionId)
 
-    await createNotification({
+    await notifyUser({
       userId:    studentId,
       type:      'skill_revision',
       title:     `🔄 Revision Requested: ${skillName} — ${capitalize(level)}`,
       body:      `Your ${skillName} — ${capitalize(level)} submission needs revision. ${feedback ? `Admin feedback: ${feedback}` : 'Please review and resubmit.'} Your deadline has been extended — resubmit when ready.`,
       data:      { link: '/student/learn/submissions' },
-      sendEmail: false,
+      priority:  'normal',
     })
 
     return NextResponse.json({ message: 'Revision requested. Student notified.' })

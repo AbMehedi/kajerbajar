@@ -6,7 +6,7 @@
 
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
-import { createNotification } from '@/lib/server-notifications'
+import { notifyUser } from '@/lib/server-notifications'
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
 
 // ── GET ───────────────────────────────────────────────────────────────────────
@@ -190,13 +190,13 @@ export async function PATCH(request) {
     // Send email notification if selected
     if (newStatus === 'selected') {
       try {
-        await createNotification({
+        await notifyUser({
           userId: application.student_id,
           type: 'application',
           title: 'You were selected!',
           body: `Congratulations! You have been selected for the project "${application.projects?.title}". The company will deposit escrow soon.`,
           data: { link: `/student/workspace/${application.project_id}` },
-          sendEmail: true
+          priority: 'important',
         })
       } catch (notifErr) {
         console.error('[company/applications PATCH] Failed to send notification:', notifErr)

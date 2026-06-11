@@ -9,7 +9,7 @@ import { requireAuthAndRole } from '@/lib/api'
 import { createAdminSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
-import { createNotification } from '@/lib/server-notifications'
+import { notifyUser } from '@/lib/server-notifications'
 
 // Platform commission rate (10%)
 const COMMISSION_RATE = 0.10
@@ -163,13 +163,13 @@ export async function POST(request, { params }) {
     }
 
     try {
-      await createNotification({
+      await notifyUser({
         userId: payoutStudentId,
         type: 'payment',
         title: 'Payment Released!',
         body: `৳${studentPayout} has been released to your wallet for "${project.title}".`,
         data: { link: `/student/workspace/${projectId}` },
-        sendEmail: true
+        priority: 'important',
       })
     } catch (notifErr) {
       console.error('[projects/release POST] Failed to send notification:', notifErr)

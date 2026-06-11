@@ -1,5 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase-server'
-import { createNotification } from '@/lib/server-notifications'
+import { notifyUser } from '@/lib/server-notifications'
 
 /**
  * Automatically evaluates and assigns marketplace badges for a student
@@ -78,12 +78,13 @@ export async function evaluateStudentBadge(studentId) {
         }
         const badgeName = BADGE_LABELS[targetBadge] || targetBadge
 
-        await createNotification({
+        await notifyUser({
           userId: studentId,
           type: 'system',
           title: 'You Earned a New Badge!',
           body: `Congratulations! Your KaajerBazar performance has earned you the ${badgeName} badge. Keep up the great work!`,
-          data: { link: '/student/dashboard' }
+          data: { link: '/student/dashboard' },
+          priority: 'normal',
         })
           
         console.log(`[evaluateStudentBadge] Assigned ${targetBadge} to ${studentId}`)

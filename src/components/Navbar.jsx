@@ -1,129 +1,54 @@
-'use client'
-
 // src/components/Navbar.jsx
-// Member B owns this file.
-// Role-aware navigation bar — conditionally renders links based on user role.
-//
-// XP NOTE: NAV_LINKS is a data object, not JSX. To add a new page to a role's
-// navigation → add one line to the array. No JSX copy-pasting needed.
+// Public navigation bar for marketing/auth pages only.
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import ThemeToggle from '@/components/ThemeToggle'
 
-// ── Navigation link definitions ───────────────────────────────────────────────
-// Add new routes here — the component renders them automatically.
-const NAV_LINKS = {
-  student: [
-    { href: '/student/dashboard',  label: 'Dashboard'       },
-    { href: '/student/projects',   label: 'Browse Projects' },
-    { href: '/student/skill-test', label: 'Skill Tests'     },
-  ],
-  company: [
-    { href: '/company/dashboard',    label: 'Dashboard'      },
-    { href: '/company/post-project', label: 'Post a Project' },
-  ],
-  admin: [
-    { href: '/admin/dashboard',        label: 'Dashboard'     },
-    { href: '/admin/skill-test-queue', label: 'Skill Queue'   },
-    { href: '/admin/company-queue',    label: 'Company Queue' },
-  ],
-}
+const PUBLIC_LINKS = [
+  { href: '/', label: 'Home' },
+]
 
 export default function Navbar() {
-  const router = useRouter()
-  const [role, setRole]         = useState(null)
-  const [fullName, setFullName] = useState('')
-  const [loading, setLoading]   = useState(true)
-
-  useEffect(() => {
-    async function fetchUser() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from('users_profiles')
-          .select('role, full_name')
-          .eq('id', user.id)
-          .single()
-
-        setRole(profile?.role ?? null)
-        setFullName(profile?.full_name ?? '')
-      }
-      setLoading(false)
-    }
-    fetchUser()
-  }, [])
-
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
-    router.refresh()
-  }
-
-  // Don't render anything until we know the user's auth state
-  // (prevents flash of wrong nav links)
-  if (loading) return null
-
-  const links = role ? (NAV_LINKS[role] ?? []) : []
-
   return (
-    <nav className="glass border-b sticky top-0 z-50">
+    <nav className="glass border-b border-[hsl(var(--kb-border))] sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* Brand */}
-        <Link href="/" className="text-white font-bold text-lg">
+        <Link href="/" className="text-[hsl(var(--kb-text-primary))] font-bold text-lg hover:text-[hsl(var(--kb-brand-400))] transition-colors">
           কাজের বাজার
         </Link>
 
-        {/* Role-specific nav links */}
-        <div className="flex items-center gap-6">
-          {links.map((link) => (
+        {/* Public nav links */}
+        <div className="hidden md:flex items-center gap-6">
+          {PUBLIC_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-slate-400 hover:text-white text-sm transition-colors"
+              className="group relative text-[hsl(var(--kb-text-secondary))] hover:text-[hsl(var(--kb-text-primary))] text-sm transition-colors"
             >
-              {link.label}
+              <span>{link.label}</span>
+              <span className="absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 bg-[hsl(var(--kb-brand-400))] transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
           ))}
         </div>
 
         {/* Auth controls */}
         <div className="flex items-center gap-3">
-          {role ? (
-            <>
-              <span className="text-slate-500 text-xs">
-                {fullName} ({role})
-              </span>
-              <button
-                id="navbar-logout"
-                onClick={handleLogout}
-                className="text-xs text-slate-400 hover:text-red-400 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                id="navbar-login"
-                href="/login"
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                Login
-              </Link>
-              <Link
-                id="navbar-register"
-                href="/register"
-                className="bg-purple-600 hover:bg-purple-500 text-white text-sm px-4 py-1.5 rounded-lg transition-colors"
-              >
-                Register
-              </Link>
-            </>
-          )}
+          <ThemeToggle />
+          <Link
+            id="navbar-login"
+            href="/login"
+            className="kb-btn-ghost text-sm"
+          >
+            Sign In
+          </Link>
+          <Link
+            id="navbar-register"
+            href="/register"
+            className="kb-btn-primary text-sm"
+          >
+            Get Started
+          </Link>
         </div>
 
       </div>

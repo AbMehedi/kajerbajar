@@ -9,7 +9,13 @@
     "lint": "next lint",
     "test:auth": "node tests/phase1/auth.test.js",
     "test:middleware": "node tests/phase1/middleware.test.js",
-    "test:phase1": "node tests/phase1/auth.test.js && node tests/phase1/middleware.test.js"
+    "test:verification": "node tests/phase1/company-verification.test.js",
+    "test:phase1": "node tests/phase1/auth.test.js && node tests/phase1/middleware.test.js && node tests/phase1/company-verification.test.js",
+    "test:skills": "node tests/phase2/skill_verification.test.js",
+    "test:phase2": "node tests/phase2/skill_verification.test.js",
+    "test": "npm run test:phase1",
+    "setup:scripts": "node setup-scripts.js",
+    "seed:test-users": "node setup-scripts.js && node scripts/seed-test-users.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -17,14 +23,17 @@
     "@supabase/supabase-js": "^2.100.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "next": "14.2.35",
+    "openai": "^6.35.0",
     "pdf-lib": "^1.17.1",
     "react": "^18",
     "react-dom": "^18",
+    "resend": "^6.12.3",
     "shadcn": "^4.1.1",
     "tailwind-merge": "^3.5.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {
     "eslint": "^8",

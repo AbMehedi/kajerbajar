@@ -1,102 +1,102 @@
 // src/app/admin/dashboard/page.jsx
-// Member C owns this file.
-// Uses .gradient-brand and .glass from globals.css
+// D3: Admin dashboard — icon StatCards + Framer Motion stagger + SectionHeader.
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
+import DashboardShell from "@/components/layout/DashboardShell";
+import AdminStatCards from "./AdminStatCards";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export const metadata = {
-  title: 'Admin Dashboard',   // layout.js template adds "| KaajerBazar"
-}
-
-// Colour classes for stat cards — keyed by intent, not by raw colour name.
-// To change "students = purple" → change the value here, nowhere else.
-const STAT_COLORS = {
-  students:     'border-purple-500/30 text-purple-300',
-  companies:    'border-blue-500/30   text-blue-300',
-  pending:      'border-yellow-500/30 text-yellow-300',
-}
+  title: "Admin Dashboard — KaajerBazar",
+};
 
 export default async function AdminDashboard() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from('users_profiles')
-    .select('full_name, role')
-    .eq('id', user.id)
-    .single()
+    .from("users_profiles")
+    .select("full_name, role, avatar_url")
+    .eq("id", user.id)
+    .single();
 
-  if (profile?.role !== 'admin') redirect('/unauthorized')
+  if (profile?.role !== "admin") redirect("/unauthorized");
 
-  // Fetch all stats in parallel — one round-trip to the DB
+  // Fetch only counts for the stat cards
   const [
     { count: studentCount },
     { count: companyCount },
     { count: pendingVerifCount },
+    { count: pendingCompanyCount },
   ] = await Promise.all([
-    supabase.from('student_profiles')   .select('*', { count: 'exact', head: true }),
-    supabase.from('company_profiles')   .select('*', { count: 'exact', head: true }),
-    supabase.from('skill_verifications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-  ])
+    supabase.from("student_profiles").select("*", { count: "exact", head: true }),
+    supabase.from("company_profiles").select("*", { count: "exact", head: true }),
+    supabase
+      .from("module_submissions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+      .not("submitted_at", "is", null),
+    supabase.from("company_profiles").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
+  ]);
+
+  const stats = [
+    { iconName: "users",    label: "Total Students",     value: studentCount ?? 0,      color: "purple" },
+    { iconName: "building", label: "Total Companies",    value: companyCount ?? 0,      color: "blue"   },
+    { iconName: "clock",    label: "Pending Skills",     value: pendingVerifCount ?? 0, color: "amber"  },
+    { iconName: "alert",    label: "Pending Companies",  value: pendingCompanyCount ?? 0, color: "orange" },
+  ]
 
   return (
-    <div className="gradient-brand min-h-screen">
+    <DashboardShell avatarUrl={profile?.avatar_url}
+      role="admin"
+      fullName={profile?.full_name ?? ""}
+      activePath="/admin/dashboard"
+    >
+      <div className="max-w-5xl mx-auto px-6 py-10">
 
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <span className="text-white font-bold text-lg">KaajerBazar Admin</span>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-400 text-sm">{profile?.full_name}</span>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="text-xs text-slate-400 hover:text-red-400 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
+        {/* ── Page header ── */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white mb-1">Admin Dashboard</h1>
+          <p className="text-slate-400 text-sm">Platform overview and moderation queue</p>
+        </div>
+
+        {/* ── Animated stat cards (client component for Framer Motion) ── */}
+        <AdminStatCards stats={stats} />
+
+        {/* ── Quick actions ── */}
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/admin/company-queue"
+              className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-amber-500/40 transition-colors group"
             >
-              Logout
-            </button>
-          </form>
+              <div>
+                <p className="text-white font-semibold text-sm">Company Queue</p>
+                <p className="text-slate-500 text-xs mt-0.5">Review pending trade licenses</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+            </Link>
+            <Link
+              href="/admin/learning/queue"
+              className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-amber-500/40 transition-colors group"
+            >
+              <div>
+                <p className="text-white font-semibold text-sm">Skill Verification Queue</p>
+                <p className="text-slate-500 text-xs mt-0.5">Review student submissions</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+            </Link>
+          </div>
         </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold text-white mb-8">Admin Dashboard</h1>
-
-        {/* Live stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Total Students"        value={studentCount     ?? 0} colorKey="students"  />
-          <StatCard label="Total Companies"       value={companyCount     ?? 0} colorKey="companies" />
-          <StatCard label="Pending Verifications" value={pendingVerifCount ?? 0} colorKey="pending"   />
-        </div>
-
-        {/* Placeholder queue sections — filled in Phase 2 & 3 */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PlaceholderCard title="🔍 Skill Test Queue"         note="Available in Phase 2" />
-          <PlaceholderCard title="🏢 Company Verification Queue" note="Available in Phase 3" />
-        </div>
-      </main>
-
-    </div>
-  )
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, colorKey }) {
-  return (
-    <div className={`glass rounded-xl p-5 border ${STAT_COLORS[colorKey]}`}>
-      <p className="text-slate-400 text-xs mb-1">{label}</p>
-      <p className="text-white text-3xl font-bold">{value}</p>
-    </div>
-  )
-}
-
-function PlaceholderCard({ title, note }) {
-  return (
-    <div className="glass rounded-xl p-6">
-      <h3 className="text-white font-semibold mb-2">{title}</h3>
-      <p className="text-slate-500 text-sm">{note}</p>
-    </div>
-  )
+      </div>
+    </DashboardShell>
+  );
 }

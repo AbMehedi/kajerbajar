@@ -72,14 +72,9 @@ export async function middleware(request) {
   }
 
   // 2. Authenticated user — check role matches the requested path prefix
+  // Read role from JWT metadata (zero DB calls) instead of querying users_profiles
   if (user) {
-    const { data: profile } = await supabase
-      .from('users_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const role = profile?.role
+    const role = user.user_metadata?.role ?? user.app_metadata?.role
 
     for (const guard of ROLE_GUARDS) {
       if (pathname.startsWith(guard.prefix) && role !== guard.allowedRole) {

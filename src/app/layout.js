@@ -27,6 +27,7 @@
 
 import localFont from 'next/font/local'
 import './globals.css'
+import DevQuickLogin from '@/components/DevQuickLogin'
 
 /* ── Fonts ─────────────────────────────────────────────────────
  * Geist is Vercel's clean, modern font family.
@@ -76,8 +77,31 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('kb-theme');
+                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <DevQuickLogin />
 
         {/*
          * 🔔 FUTURE: Add <Toaster /> here in Phase 2 when we need

@@ -5,6 +5,8 @@
 import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const BUCKET = 'skill-submissions'
 const EXPIRY_SECONDS = 60
 

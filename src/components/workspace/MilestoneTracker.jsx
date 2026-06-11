@@ -37,6 +37,7 @@ export default function MilestoneTracker({ projectId, role }) {
 
     try {
       setAdding(true)
+      setError(null)
       const res = await fetch(`/api/projects/${projectId}/milestones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +60,7 @@ export default function MilestoneTracker({ projectId, role }) {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
     
     // Optimistic UI update
+    setError(null)
     setMilestones(prev => prev.map(m => m.id === milestoneId ? { ...m, status: newStatus } : m))
 
     try {
@@ -79,6 +81,7 @@ export default function MilestoneTracker({ projectId, role }) {
     if (!isCompany) return
 
     try {
+      setError(null)
       const res = await fetch(`/api/projects/${projectId}/milestones?milestoneId=${milestoneId}`, {
         method: 'DELETE'
       })

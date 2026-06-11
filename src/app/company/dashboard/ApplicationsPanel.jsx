@@ -69,11 +69,13 @@ function RankBadge({ rank }) {
 function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartProject, startLoading, startError }) {
   const [expanded, setExpanded] = useState(false)
   const student = app.student_profiles
-  const name = student?.users_profiles?.full_name ?? 'Unknown Student'
+  const userProfile = Array.isArray(student?.users_profiles) ? student.users_profiles[0] : student?.users_profiles
+  const name = userProfile?.full_name ?? 'Unknown Student'
+  const avatarUrl = userProfile?.avatar_url
   const username = student?.username ?? '—'
   const university = student?.university ?? 'Not specified'
   const score = student?.kaajerscore
-  const skills = app.verified_skills ?? []
+  const badges = app.marketplace_badges ?? []
   const isLoading = actionLoading === app.id
   const isResolved = app.status !== 'pending'
 
@@ -86,41 +88,56 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
         className="flex items-start justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors gap-3"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            {rank && <RankBadge rank={rank} />}
-            <Link 
-              href={`/profile/student/${app.student_id}`}
-              target="_blank"
-              onClick={(e) => e.stopPropagation()}
-              className={`font-semibold text-sm hover:underline hover:text-purple-400 flex items-center gap-1 ${isResolved ? 'text-slate-400' : 'text-white'}`}
-            >
-              {name} <ExternalLink className="w-3 h-3" />
-            </Link>
-            <StatusBadge status={app.status} />
-          </div>
-          <p className="text-slate-500 text-xs">@{username} · {university}</p>
+        <div className="min-w-0 flex items-start gap-4">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10" />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold shrink-0 border border-purple-500/30">
+              {name.charAt(0)}
+            </div>
+          )}
 
-          {/* Score + skill badges */}
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
-              score !== null && score !== undefined
-                ? 'text-purple-300 bg-purple-500/15 border-purple-500/25'
-                : 'text-slate-500 bg-white/5 border-white/10'
-            }`}>
-              ⭐ {score !== null && score !== undefined ? `${score.toFixed(1)} / 100` : 'No score yet'}
-            </span>
-            {skills.slice(0, 3).map((s) => (
-              <span key={s} className="text-xs bg-green-500/15 text-green-400 border border-green-500/25 px-2 py-0.5 rounded-md">
-                ✓ {s}
+          <div>
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              {rank && <RankBadge rank={rank} />}
+              <Link 
+                href={`/profile/student/${app.student_id}`}
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+                className={`font-semibold text-sm hover:underline hover:text-purple-400 flex items-center gap-1 ${isResolved ? 'text-slate-400' : 'text-white'}`}
+              >
+                {name} <ExternalLink className="w-3 h-3" />
+              </Link>
+              <StatusBadge status={app.status} />
+            </div>
+            <p className="text-slate-500 text-xs">@{username} · {university}</p>
+
+            {/* Score + skill badges */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                score !== null && score !== undefined
+                  ? 'text-purple-300 bg-purple-500/15 border-purple-500/25'
+                  : 'text-slate-500 bg-white/5 border-white/10'
+              }`}>
+                ⭐ {score !== null && score !== undefined ? `${score.toFixed(1)} / 100` : 'No score yet'}
               </span>
-            ))}
-            {skills.length > 3 && (
-              <span className="text-xs text-slate-500">+{skills.length - 3} more</span>
-            )}
-            {skills.length === 0 && (
-              <span className="text-xs text-slate-600 italic">No verified skills yet</span>
-            )}
+              
+              {(() => {
+                const BADGE_LABELS = {
+                  rising_talent:   { label: '🌟 Rising Star',   color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+                  top_rated:       { label: '⭐ Top Rated',      color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+                  top_rated_plus:  { label: '🏆 Elite',         color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+                }
+                return badges.map((b) => {
+                  const cfg = BADGE_LABELS[b] || { label: b, color: 'bg-white/10 text-white border-white/20' }
+                  return (
+                    <span key={b} className={`text-xs px-2 py-0.5 rounded-md border ${cfg.color}`}>
+                      {cfg.label}
+                    </span>
+                  )
+                })
+              })()}
+            </div>
           </div>
         </div>
 
@@ -394,7 +411,7 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
           <div>
             <p className="text-purple-300 text-xs font-semibold">Ranked by KaajerScore</p>
             <p className="text-slate-400 text-xs mt-0.5">
-              Applicants are ranked by their trust score — a weighted blend of verified skills (30%), project ratings received (50%), and completion rate (20%). Higher = more reliable.
+              Applicants are ranked by their trust score — a weighted blend of project ratings received (70%) and project completion rate (30%). Higher = more reliable.
             </p>
           </div>
         </div>

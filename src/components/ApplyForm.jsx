@@ -67,7 +67,7 @@ export default function ApplyForm({ projectId, onSuccess, onCancel }) {
       onSuccess?.()
     } catch {
       setErrorMsg('Network error. Please check your connection and try again.')
-      setStatus('error')
+      setStatus('idle')
     }
   }
 

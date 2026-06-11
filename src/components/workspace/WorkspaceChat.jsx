@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Send, MessageSquare, Loader2, User } from 'lucide-react'
 
@@ -12,10 +12,10 @@ export default function WorkspaceChat({ projectId, currentUserProfile }) {
   const [error, setError] = useState('')
   const messagesEndRef = useRef(null)
   
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
+  ), [])
 
   // 1. Fetch initial messages
   useEffect(() => {

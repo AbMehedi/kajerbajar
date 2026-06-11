@@ -22,26 +22,7 @@ import { evaluateStudentBadge } from '@/lib/badges'
 export async function recalculateKaajerScore(studentId) {
   const adminClient = createServiceRoleClient()
   try {
-    // ── Component 1: Verified Skill Score (30%) ─────────────────────────────────────
-    // Count verified skills from the Learning Module system.
-    // Score = (verified skill count / TARGET) * 100, capped at 100.
-    // TARGET = 10 unique verified skills at any level = full score.
-    //
-    // NOTE for future match-score algorithm (calculateMatchScore):
-    //   If a student has a skill in verified_skills, apply a 1.5x weight multiplier
-    //   vs. 1.0x for self-claimed (unverified) skills. Final score must be capped at 100%.
-    const VERIFIED_SKILL_TARGET = 10
-    const { data: verifiedSkillsData } = await adminClient
-      .from('verified_skills')
-      .select('id')
-      .eq('student_id', studentId)
-
-    const verifiedCount = verifiedSkillsData?.length ?? 0
-    const skillScore = verifiedCount > 0
-      ? Math.min(100, (verifiedCount / VERIFIED_SKILL_TARGET) * 100)
-      : null
-
-    // ── Component 2: Average Project Ratings Received (50%) ──────────────────
+    // ── Component 1: Average Project Ratings Received (70%) ──────────────────
     // Only include unlocked reviews (i.e., projects where the student has also reviewed).
     // Step 1: Get all project_ids where student has left a review.
     const { data: myReviews } = await adminClient
@@ -66,7 +47,7 @@ export async function recalculateKaajerScore(studentId) {
       }
     }
 
-    // ── Component 3: Project Completion Rate (20%) ───────────────────────────
+    // ── Component 2: Project Completion Rate (30%) ───────────────────────────
     // Count projects where student was selected, regardless of outcome.
     const { data: assignedApps } = await adminClient
       .from('applications')
@@ -89,37 +70,39 @@ export async function recalculateKaajerScore(studentId) {
     }
 
     // ── Determine final KaajerScore ──────────────────────────────────────────
-    // If all three components are null, student has no activity → score = null
-    const hasAnyActivity = skillScore !== null || ratingScore !== null || completionScore !== null
+    // If both components are null, student has no activity → score = null
+    const hasAnyActivity = ratingScore !== null || completionScore !== null
 
     let finalScore = null
     if (hasAnyActivity) {
       // Use 0 for null components so we don't artificially inflate partial scores
-      const s = skillScore ?? 0
       const r = ratingScore ?? 0
       const c = completionScore ?? 0
 
-      // Weighted sum
-      const weighted = s * 0.30 + r * 0.50 + c * 0.20
+      // Weighted sum: 70% ratings, 30% completion
+      const weighted = r * 0.70 + c * 0.30
 
       // Round to 1 decimal place, clamp to [0, 100]
       finalScore = Math.min(100, Math.max(0, Math.round(weighted * 10) / 10))
     }
 
     // ── Persist to student_profiles ──────────────────────────────────────────
-    const { error } = await adminClient
+    const { error, count } = await adminClient
       .from('student_profiles')
       .update({ kaajerscore: finalScore })
       .eq('id', studentId)
+      .select('id', { count: 'exact', head: true })
 
     if (error) {
       console.error('[recalculateKaajerScore] DB update error:', error)
+    } else if (count === 0) {
+      console.warn('[recalculateKaajerScore] No student_profile row found for student:', studentId)
     }
 
     // ── Evaluate Marketplace Badge ───────────────────────────────────────────
     await evaluateStudentBadge(studentId)
 
-    return { finalScore, skillScore, ratingScore, completionScore }
+    return { finalScore, ratingScore, completionScore }
   } catch (err) {
     console.error('[recalculateKaajerScore] Unexpected error:', err)
   }

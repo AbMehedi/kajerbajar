@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
-import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const ROLE_DASHBOARD = {
@@ -99,6 +99,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState('')
@@ -234,13 +235,20 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--kb-text-muted))] pointer-events-none" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="kb-input w-full pl-10 text-sm"
+                  className="kb-input w-full pl-10 pr-10 text-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--kb-text-muted))] hover:text-[hsl(var(--kb-text-secondary))] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </motion.div>
 

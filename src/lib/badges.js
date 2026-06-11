@@ -1,5 +1,5 @@
-// src/lib/badges.js
 import { createServiceRoleClient } from '@/lib/supabase-server'
+import { createNotification } from '@/lib/server-notifications'
 
 /**
  * Automatically evaluates and assigns marketplace badges for a student
@@ -30,10 +30,8 @@ export async function evaluateStudentBadge(studentId) {
     if (reviews && reviews.length > 0) {
       const sum = reviews.reduce((acc, r) => acc + r.rating, 0)
       avgRating = sum / reviews.length
-    } else {
-      // If no reviews, assume 5.0 for baseline to allow initial earning-based unlock if they somehow have earnings without reviews
-      avgRating = 5.0
     }
+    // Note: if no reviews, avgRating stays 0 — students with no reviews cannot earn a badge.
 
     const earnings = student.wallet_balance || 0
     let targetBadge = null
@@ -46,14 +44,16 @@ export async function evaluateStudentBadge(studentId) {
       targetBadge = 'rising_talent'
     }
 
-    if (targetBadge) {
-      const { data: existing } = await adminClient
-        .from('student_badges')
-        .select('badge_type, is_active')
-        .eq('student_id', studentId)
-        .eq('is_active', true)
-        .maybeSingle()
+    // Fetch current active badge (if any)
+    const { data: existing } = await adminClient
+      .from('student_badges')
+      .select('badge_type, is_active')
+      .eq('student_id', studentId)
+      .eq('is_active', true)
+      .maybeSingle()
 
+    if (targetBadge) {
+      // Only update if the badge has changed
       if (!existing || existing.badge_type !== targetBadge) {
         if (existing) {
           await adminClient
@@ -71,8 +71,31 @@ export async function evaluateStudentBadge(studentId) {
             is_active: true
           })
           
-        console.log(`[evaluateStudentBadge] Assigned \${targetBadge} to \${studentId}`)
+        const BADGE_LABELS = {
+          rising_talent: '🌟 Rising Star',
+          top_rated: '⭐ Top Rated',
+          top_rated_plus: '🏆 Elite',
+        }
+        const badgeName = BADGE_LABELS[targetBadge] || targetBadge
+
+        await createNotification({
+          userId: studentId,
+          type: 'system',
+          title: 'You Earned a New Badge!',
+          body: `Congratulations! Your KaajerBazar performance has earned you the ${badgeName} badge. Keep up the great work!`,
+          data: { link: '/student/dashboard' }
+        })
+          
+        console.log(`[evaluateStudentBadge] Assigned ${targetBadge} to ${studentId}`)
       }
+    } else if (existing) {
+      // Student no longer qualifies for any badge — revoke the current one
+      await adminClient
+        .from('student_badges')
+        .update({ is_active: false, revoked_at: new Date().toISOString(), revoke_reason: 'No longer meets badge criteria' })
+        .eq('student_id', studentId)
+        .eq('is_active', true)
+      console.log(`[evaluateStudentBadge] Revoked ${existing.badge_type} from ${studentId}`)
     }
   } catch (err) {
     console.error('[evaluateStudentBadge] Error evaluating badge for', studentId, err)

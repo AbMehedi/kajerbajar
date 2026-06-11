@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole, parseJsonBody, jsonError } from '@/lib/api'
-import { createAdminSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,11 +13,6 @@ export async function GET(request) {
 
     const { supabase: userClient, user } = auth
     const { searchParams } = new URL(request.url)
-
-    // DEBUG: Use admin client to bypass RLS and see if records exist
-    const adminClient = await createAdminSupabaseClient()
-    const { data: adminAll } = await adminClient.from('notifications').select('*').eq('user_id', user.id)
-    console.log('[notifications GET] Admin check (rows for this user):', adminAll?.length || 0)
 
     const unreadCountOnly = searchParams.get('unreadCount') === '1'
     const limit = Number(searchParams.get('limit') ?? 20)

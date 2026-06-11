@@ -98,7 +98,10 @@ export async function POST(request, { params }) {
   const deadlineAt = new Date(Date.now() + moduleData.deadline_hours * 60 * 60 * 1000).toISOString()
 
   // Determine attempt number (count previous fail submissions for this module)
-  const { count: previousFails } = await supabase
+  // Use adminClient to ensure RLS does not under-count previous failures.
+  const adminClient = createServiceRoleClient()
+  
+  const { count: previousFails } = await adminClient
     .from('module_submissions')
     .select('id', { count: 'exact', head: true })
     .eq('student_id', user.id)
@@ -108,13 +111,12 @@ export async function POST(request, { params }) {
   const attemptNumber = (previousFails ?? 0) + 1
 
   // Use service role to insert (bypass RLS for the insert, student_id is explicitly set)
-  const adminClient = createServiceRoleClient()
   const { data: submission, error: insertError } = await adminClient
     .from('module_submissions')
     .insert({
       student_id:     user.id,
       module_id:      moduleId,
-      ai_brief:       JSON.stringify(briefObj),  // store as JSON string
+      ai_brief:       briefObj,          // stored as JSONB — Supabase serializes automatically
       status:         'pending',
       attempt_number: attemptNumber,
       deadline_at:    deadlineAt,

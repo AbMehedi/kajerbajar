@@ -8,7 +8,7 @@ export async function GET(request, { params }) {
   if (auth.errorResponse) return auth.errorResponse
 
   const { supabase } = auth
-  const { id } = params
+  const { id } = await params
 
   const { data, error } = await supabase
     .from('projects')

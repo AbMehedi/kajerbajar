@@ -7,6 +7,7 @@
 
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
+import { createServiceRoleClient } from '@/lib/supabase-server'
 
 export async function POST(request) {
   const auth = await requireAuthAndRole({
@@ -54,7 +55,6 @@ export async function POST(request) {
   // ═══════════════════════════════════════════════════════════════════
   // Step 4: Verify company exists and is pending
   // ═══════════════════════════════════════════════════════════════════
-  const { createServiceRoleClient } = require('@/lib/supabase-server')
   const serviceRoleClient = createServiceRoleClient()
 
   const { data: company, error: companyError } = await serviceRoleClient

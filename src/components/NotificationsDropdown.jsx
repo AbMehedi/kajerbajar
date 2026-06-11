@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Bell, Check, Trash2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
@@ -10,7 +10,7 @@ export default function NotificationsDropdown({ unreadCount, setUnreadCount }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
   const dropdownRef = useRef(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // Close dropdown when clicking outside
   useEffect(() => {

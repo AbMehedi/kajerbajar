@@ -7,6 +7,7 @@
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/server-notifications'
+import { createAdminSupabaseClient } from '@/lib/supabase-server'
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 // NOTE: In Next.js dev mode with React Strict Mode, useEffect fires twice —
@@ -44,8 +45,11 @@ export async function GET(request) {
     const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 per page
     const offset = (validPage - 1) * validLimit
 
+    const adminClient = await createAdminSupabaseClient()
+
     // ⚡ Step 1: Fetch applications for this project
-    const { data: applications, error, count } = await supabase
+    // We use adminClient to bypass RLS on users_profiles so the company can see applicant details
+    const { data: applications, error, count } = await adminClient
       .from('applications')
       .select(`
         id,
@@ -58,7 +62,7 @@ export async function GET(request) {
           username,
           university,
           kaajerscore,
-          users_profiles ( full_name, email )
+          users_profiles!student_profiles_id_fkey ( full_name, email, avatar_url )
         )
       `, { count: 'exact' })
       .eq('project_id', projectId)
@@ -73,13 +77,13 @@ export async function GET(request) {
     // Build applicant ID list for targeted badge query
     const applicantIds = ((applications ?? []).map((a) => a.student_id))
     
-    // ⚡ Step 2: Fetch approved badges ONLY for these applicants (not all in DB)
+    // ⚡ Step 2: Fetch active marketplace badges ONLY for these applicants
     let allBadges = []
     if (applicantIds.length > 0) {
-      const { data: badges, error: badgeError } = await supabase
-        .from('skill_verifications')
-        .select('student_id, skill_category')
-        .eq('status', 'approved')
+      const { data: badges, error: badgeError } = await adminClient
+        .from('student_badges')
+        .select('student_id, badge_type')
+        .eq('is_active', true)
         .in('student_id', applicantIds)
       
       if (badgeError) {
@@ -95,12 +99,12 @@ export async function GET(request) {
     for (const badge of allBadges) {
       if (!applicantIdSet.has(badge.student_id)) continue
       if (!badgeMap[badge.student_id]) badgeMap[badge.student_id] = []
-      badgeMap[badge.student_id].push(badge.skill_category)
+      badgeMap[badge.student_id].push(badge.badge_type)
     }
 
     const enriched = (applications ?? []).map((app) => ({
       ...app,
-      verified_skills: badgeMap[app.student_id] ?? [],
+      marketplace_badges: badgeMap[app.student_id] ?? [],
     }))
 
     return NextResponse.json({

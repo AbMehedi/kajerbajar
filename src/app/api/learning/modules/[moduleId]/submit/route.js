@@ -73,6 +73,7 @@ export async function POST(request, { params }) {
         status:         'fail',
         admin_feedback: 'Automatically failed — submission deadline was missed.',
         reviewed_at:    new Date().toISOString(),
+        attempt_number: totalFails,   // keep attempt_number consistent with manual fail
         cooldown_until: cooldownUntil,
       })
       .eq('id', submissionId)

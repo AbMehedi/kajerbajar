@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AvatarUpload from '@/components/ui/AvatarUpload'
+import { BD_UNIVERSITIES } from '@/lib/universities'
 
 export default function EditProfileForm({ initialData }) {
   const router = useRouter()
@@ -102,12 +103,18 @@ export default function EditProfileForm({ initialData }) {
           <input
             type="text"
             name="university"
+            list="universities"
             value={formData.university}
             onChange={handleChange}
             required
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500/50 transition-colors"
             placeholder="e.g. United International University"
           />
+          <datalist id="universities">
+            {BD_UNIVERSITIES.map((uni) => (
+              <option key={uni} value={uni} />
+            ))}
+          </datalist>
         </div>
 
         <div>

@@ -6,6 +6,7 @@
 
 import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
+import { createServiceRoleClient } from '@/lib/supabase-server'
 
 export async function GET() {
   const auth = await requireAuthAndRole({
@@ -15,8 +16,6 @@ export async function GET() {
   })
   if (auth.errorResponse) return auth.errorResponse
 
-  const { supabase } = auth
-  const { createServiceRoleClient } = require('@/lib/supabase-server')
   const serviceRoleClient = createServiceRoleClient()
   
   // ═══════════════════════════════════════════════════════════════════

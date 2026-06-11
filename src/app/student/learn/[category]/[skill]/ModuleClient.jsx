@@ -302,12 +302,35 @@ export default function ModuleClient({ skillName, category, modules, initialData
   const activeModule = moduleForLevel(activeSubmission?.learning_modules?.difficulty_level)
 
   const hasActiveUnsubmitted = activeSubmission && !activeSubmission.submitted_at
+  const isActiveForThisSkill = activeSubmission?.learning_modules?.skill_name === skillName
 
   return (
     <div className="space-y-6">
 
+      {/* ── Active Module Warning Banner ── */}
+      {activeSubmission && !isActiveForThisSkill && (
+        <div className="glass rounded-xl border border-amber-500/30 p-5 flex items-center justify-between gap-4 bg-amber-500/5">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-white font-semibold">Module in Progress</p>
+              <p className="text-amber-300/80 text-sm mt-0.5">
+                You already have a {activeSubmission.submitted_at ? "submitted" : "pending"} module for <strong>{activeSubmission.learning_modules?.skill_name}</strong>.
+                You must complete it or wait for review before starting a new skill.
+              </p>
+            </div>
+          </div>
+          <a
+            href={`/student/learn/${activeSubmission.learning_modules?.skill_category}/${encodeURIComponent(activeSubmission.learning_modules?.skill_name ?? '')}`}
+            className="shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-sm font-bold rounded-lg transition-colors shadow-sm"
+          >
+            Go to {activeSubmission.learning_modules?.skill_name} →
+          </a>
+        </div>
+      )}
+
       {/* ── Active Brief (if module started and not yet submitted) ── */}
-      {hasActiveUnsubmitted && activeBrief && (
+      {hasActiveUnsubmitted && isActiveForThisSkill && activeBrief && (
         <>
           <BriefCard brief={activeBrief} deadlineAt={activeSubmission.deadline_at} moduleInfo={activeModule ?? activeSubmission.learning_modules} />
 
@@ -376,7 +399,7 @@ export default function ModuleClient({ skillName, category, modules, initialData
       )}
 
       {/* ── Already submitted banner ── */}
-      {activeSubmission?.submitted_at && !submitSuccess && (
+      {activeSubmission?.submitted_at && isActiveForThisSkill && !submitSuccess && (
         <div className="glass rounded-xl border border-amber-500/30 p-5 flex items-center gap-3 bg-amber-500/5">
           <span className="text-2xl">⏳</span>
           <div>
@@ -388,8 +411,8 @@ export default function ModuleClient({ skillName, category, modules, initialData
         </div>
       )}
 
-      {/* ── Difficulty Level Cards (shown when no active unsubmitted module) ── */}
-      {!hasActiveUnsubmitted && (
+      {/* ── Difficulty Level Cards ── */}
+      {(!hasActiveUnsubmitted || !isActiveForThisSkill) && (
         <div className="space-y-3">
           <h2 className="text-white font-semibold text-lg">Choose a Difficulty Level</h2>
           {(['rookie', 'skilled', 'expert']).map((level) => {
@@ -398,7 +421,7 @@ export default function ModuleClient({ skillName, category, modules, initialData
             const isPassed   = verifiedLevels.has(level)
             const cooldown   = cooldownMap?.[level]
             const inCooldown = cooldown && new Date(cooldown) > now
-            const isDisabled = isPassed || inCooldown || !moduleData || (activeSubmission && activeSubmission.status === 'pending')
+            const isDisabled = isPassed || inCooldown || !moduleData || !!activeSubmission
             const isActive   = selectedLevel === level && isStarting
 
             return (
@@ -436,8 +459,8 @@ export default function ModuleClient({ skillName, category, modules, initialData
                     >
                       {isActive ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Generating brief…</>
-                      ) : activeSubmission?.status === 'pending' ? (
-                        'Module in progress'
+                      ) : activeSubmission ? (
+                        'Locked — Module Active'
                       ) : 'Start Module →'}
                     </button>
                   )}

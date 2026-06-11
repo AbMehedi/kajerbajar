@@ -2,7 +2,7 @@
 // Module Page (server shell) — /student/learn/[category]/[skill]
 // Fetches server data, passes to ModuleClient for interactivity.
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import DashboardShell from '@/components/layout/DashboardShell'
@@ -41,13 +41,31 @@ export default async function ModulePage({ params }) {
   if (profile?.role !== 'student') redirect('/unauthorized')
 
   // Fetch the learning_modules rows for this skill + category
-  const { data: modules } = await supabase
+  let { data: modules } = await supabase
     .from('learning_modules')
     .select('id, skill_category, skill_name, difficulty_level, deadline_hours, is_active')
     .eq('skill_category', category)
     .eq('skill_name', skillName)
     .eq('is_active', true)
     .order('deadline_hours', { ascending: true })
+
+  // Auto-create custom skills on the fly if they don't exist
+  if (!modules || modules.length === 0) {
+    const adminSupabase = createServiceRoleClient()
+    const newModules = [
+      { skill_category: category, skill_name: skillName, difficulty_level: 'rookie', deadline_hours: 24, is_active: true },
+      { skill_category: category, skill_name: skillName, difficulty_level: 'skilled', deadline_hours: 48, is_active: true },
+      { skill_category: category, skill_name: skillName, difficulty_level: 'expert', deadline_hours: 72, is_active: true },
+    ]
+    const { data: insertedModules } = await adminSupabase
+      .from('learning_modules')
+      .insert(newModules)
+      .select('id, skill_category, skill_name, difficulty_level, deadline_hours, is_active')
+      
+    if (insertedModules && insertedModules.length > 0) {
+      modules = insertedModules.sort((a, b) => a.deadline_hours - b.deadline_hours)
+    }
+  }
 
   // Fetch active pending submission (if any)
   const { data: activeSubmission } = await supabase

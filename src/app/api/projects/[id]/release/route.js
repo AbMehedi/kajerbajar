@@ -92,7 +92,16 @@ export async function POST(request, { params }) {
 
     if (walletError) {
       console.error('[projects/release POST] Wallet RPC error:', walletError)
-      // Non-fatal: log but continue — can be reconciled later
+      // Revert the project status to prevent an inconsistent state where
+      // the project is marked 'completed' but the student was never paid.
+      await adminClient
+        .from('projects')
+        .update({ status: 'in_progress', escrow_status: 'held' })
+        .eq('id', projectId)
+      return NextResponse.json(
+        { error: 'Payment to student wallet failed. The project status has been reverted. Please try again.' },
+        { status: 500 }
+      )
     }
 
     // 4b. Recalculate KaajerScore (affects Component 3: Completion Rate)

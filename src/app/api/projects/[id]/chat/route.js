@@ -89,8 +89,38 @@ export async function GET(request, { params }) {
     })
     if (auth.errorResponse) return auth.errorResponse
 
+    const { user, role } = auth
     const { id: projectId } = await params
     const adminClient = await createAdminSupabaseClient()
+
+    // Verify project access — same logic as POST
+    const { data: project } = await adminClient
+      .from('projects')
+      .select('id, company_id')
+      .eq('id', projectId)
+      .single()
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    if (role === 'company' && project.company_id !== user.id) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
+    if (role === 'student') {
+      const { data: app } = await adminClient
+        .from('applications')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('student_id', user.id)
+        .eq('status', 'selected')
+        .single()
+
+      if (!app) {
+        return NextResponse.json({ error: 'Access denied — not assigned' }, { status: 403 })
+      }
+    }
 
     // History limit
     const { data: messages, error } = await adminClient

@@ -8,8 +8,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
-import { Mail, Lock, User, ArrowRight, GraduationCap, Building2, FileText, Check, X, Loader2, Briefcase } from 'lucide-react'
+import { Mail, Lock, User, ArrowRight, GraduationCap, Building2, FileText, Check, X, Loader2, Briefcase, Eye, EyeOff } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
+import { BD_UNIVERSITIES } from '@/lib/universities'
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 const containerVariants = {
@@ -73,7 +74,7 @@ function RoleCard({ role, activeRole, onSelect }) {
 }
 
 // ── Labelled input with optional icon ─────────────────────────────────────────
-function FieldInput({ id, type, value, onChange, placeholder, required, min, max, icon: Icon, label, children }) {
+function FieldInput({ id, type, value, onChange, placeholder, required, min, max, list, icon: Icon, label, children }) {
   return (
     <motion.div variants={itemVariants}>
       {label && (
@@ -92,6 +93,7 @@ function FieldInput({ id, type, value, onChange, placeholder, required, min, max
           required={required}
           min={min}
           max={max}
+          list={list}
           className={`kb-input w-full text-sm ${Icon ? 'pl-10' : ''} ${children ? 'pr-10' : ''}`}
         />
         {children}
@@ -176,6 +178,7 @@ export default function RegisterPage() {
   // Shared state
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   // Student specific
   const [studentFullName, setStudentFullName] = useState('')
@@ -368,15 +371,28 @@ export default function RegisterPage() {
                     placeholder="you@university.edu" required icon={Mail} label="Email Address"
                   />
                   <FieldInput
-                    id="student-password" type="password" value={password}
+                    id="student-password" type={showPassword ? "text" : "password"} value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password (min 8 characters)" required icon={Lock} label="Password"
-                  />
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--kb-text-muted))] hover:text-[hsl(var(--kb-text-secondary))] transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </FieldInput>
                   <FieldInput
                     id="university" type="text" value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    placeholder="e.g. United International University" required icon={GraduationCap} label="University"
+                    placeholder="e.g. United International University" required list="universities" icon={GraduationCap} label="University"
                   />
+                  <datalist id="universities">
+                    {BD_UNIVERSITIES.map((uni) => (
+                      <option key={uni} value={uni} />
+                    ))}
+                  </datalist>
                   
                   <FieldInput
                     id="username" type="text" value={username}
@@ -420,10 +436,18 @@ export default function RegisterPage() {
                     placeholder="contact@company.com" required icon={Mail} label="Company Email"
                   />
                   <FieldInput
-                    id="company-password" type="password" value={password}
+                    id="company-password" type={showPassword ? "text" : "password"} value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password (min 8 characters)" required icon={Lock} label="Password"
-                  />
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--kb-text-muted))] hover:text-[hsl(var(--kb-text-secondary))] transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </FieldInput>
                   
                   <motion.div variants={itemVariants}>
                     <label className="block text-[hsl(var(--kb-text-secondary))] text-sm mb-1.5">Trade License (Optional)</label>

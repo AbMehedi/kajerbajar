@@ -62,8 +62,29 @@ export async function POST(request, { params }) {
       .eq('status', 'selected')
       .single()
 
-    if (!selectedApp) {
-      return NextResponse.json({ error: 'No selected student found for this project' }, { status: 400 })
+    let payoutStudentId = selectedApp?.student_id ?? null
+
+    // Backward-compatible fallback for projects that were started earlier but later
+    // lost the selected application status due to manual/rejected status changes.
+    if (!payoutStudentId) {
+      const { data: latestDeliverable } = await adminClient
+        .from('project_deliverables')
+        .select('student_id')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      payoutStudentId = latestDeliverable?.student_id ?? null
+    }
+
+    if (!payoutStudentId) {
+      return NextResponse.json(
+        {
+          error: 'No payout student found for this project. Select an applicant before starting and avoid changing application status after start.',
+        },
+        { status: 400 }
+      )
     }
 
     const commission = Math.round(project.budget_bdt * COMMISSION_RATE * 100) / 100
@@ -86,7 +107,7 @@ export async function POST(request, { params }) {
     // 4. Credit student wallet (call the existing RPC)
     const { error: walletError } = await serviceClient
       .rpc('increment_wallet', {
-        student_id: selectedApp.student_id,
+        student_id: payoutStudentId,
         amount: studentPayout,
       })
 
@@ -106,7 +127,7 @@ export async function POST(request, { params }) {
 
     // 4b. Recalculate KaajerScore (affects Component 3: Completion Rate)
     // Non-fatal — score update should not block payment confirmation.
-    await recalculateKaajerScore(selectedApp.student_id).catch((err) => {
+    await recalculateKaajerScore(payoutStudentId).catch((err) => {
       console.error('[projects/release POST] KaajerScore update error:', err)
     })
 
@@ -132,7 +153,7 @@ export async function POST(request, { params }) {
     const { error: certError } = await serviceClient.from('certificates').insert([
       {
         project_id: projectId,
-        student_id: selectedApp.student_id,
+        student_id: payoutStudentId,
         // pdf_url is left null since we generate on-the-fly
       }
     ])
@@ -143,7 +164,7 @@ export async function POST(request, { params }) {
 
     try {
       await createNotification({
-        userId: selectedApp.student_id,
+        userId: payoutStudentId,
         type: 'payment',
         title: 'Payment Released!',
         body: `৳${studentPayout} has been released to your wallet for "${project.title}".`,

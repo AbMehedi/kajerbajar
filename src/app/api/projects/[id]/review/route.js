@@ -7,6 +7,51 @@ import { createAdminSupabaseClient } from '@/lib/supabase-server'
 import { recalculateKaajerScore } from '@/lib/kaajerscore'
 import { NextResponse } from 'next/server'
 
+async function resolveAssignedStudentId(adminClient, projectId) {
+  // Preferred source: explicit selected application.
+  const { data: selectedApp } = await adminClient
+    .from('applications')
+    .select('student_id')
+    .eq('project_id', projectId)
+    .eq('status', 'selected')
+    .maybeSingle()
+
+  if (selectedApp?.student_id) return selectedApp.student_id
+
+  // Fallback for legacy/inconsistent rows after completion.
+  const { data: certRow } = await adminClient
+    .from('certificates')
+    .select('student_id')
+    .eq('project_id', projectId)
+    .order('issued_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (certRow?.student_id) return certRow.student_id
+
+  const { data: deliverableRow } = await adminClient
+    .from('project_deliverables')
+    .select('student_id')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (deliverableRow?.student_id) return deliverableRow.student_id
+
+  // Last resort: if only one applicant exists for the project, use it.
+  const { data: apps } = await adminClient
+    .from('applications')
+    .select('student_id')
+    .eq('project_id', projectId)
+    .limit(2)
+
+  const uniqueStudentIds = [...new Set((apps ?? []).map((row) => row.student_id).filter(Boolean))]
+  if (uniqueStudentIds.length === 1) return uniqueStudentIds[0]
+
+  return null
+}
+
 export async function POST(request, { params }) {
   try {
     const auth = await requireAuthAndRole({
@@ -33,31 +78,19 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Reviews can only be left on completed projects' }, { status: 400 })
     }
 
+    const assignedStudentId = await resolveAssignedStudentId(adminClient, projectId)
+
     // Determine reviewee_id based on who is leaving the review
     let revieweeId = null
     if (role === 'company') {
       if (project.company_id !== user.id) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-
-      // Fetch the assigned student
-      const { data: app } = await adminClient
-        .from('applications')
-        .select('student_id')
-        .eq('project_id', projectId)
-        .eq('status', 'selected')
-        .single()
-      if (!app) return NextResponse.json({ error: 'Assigned student not found' }, { status: 400 })
-      
-      revieweeId = app.student_id
+      if (!assignedStudentId) return NextResponse.json({ error: 'Assigned student not found' }, { status: 400 })
+      revieweeId = assignedStudentId
     } else {
       // Student is reviewing the company
-      const { data: app } = await adminClient
-        .from('applications')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('student_id', user.id)
-        .eq('status', 'selected')
-        .single()
-      if (!app) return NextResponse.json({ error: 'Access denied — not assigned' }, { status: 403 })
+      if (!assignedStudentId || assignedStudentId !== user.id) {
+        return NextResponse.json({ error: 'Access denied — not assigned' }, { status: 403 })
+      }
 
       // DOUBLE-BLIND ENFORCEMENT: Ensure company has already left a review
       const { data: companyReview } = await adminClient

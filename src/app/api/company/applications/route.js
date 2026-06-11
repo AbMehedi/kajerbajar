@@ -144,7 +144,7 @@ export async function PATCH(request) {
     // Verify the application belongs to one of this company's projects
     const { data: application } = await supabase
       .from('applications')
-      .select('id, project_id, student_id, projects ( company_id, title )')
+      .select('id, project_id, student_id, projects ( company_id, title, status, escrow_status )')
       .eq('id', applicationId)
       .single()
 
@@ -152,7 +152,30 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Application not found or access denied' }, { status: 403 })
     }
 
+    // Lock applicant decisions once a project has started.
+    if (application.projects?.status !== 'open') {
+      return NextResponse.json(
+        { error: `Cannot change application status after project start (current project status: '${application.projects?.status}')` },
+        { status: 409 }
+      )
+    }
+
     const newStatus = action === 'select' ? 'selected' : 'rejected'
+
+    // Keep a single selected applicant per project to avoid ambiguous payout target later.
+    if (newStatus === 'selected') {
+      const { error: unselectError } = await supabase
+        .from('applications')
+        .update({ status: 'rejected' })
+        .eq('project_id', application.project_id)
+        .eq('status', 'selected')
+        .neq('id', applicationId)
+
+      if (unselectError) {
+        console.error('[company/applications PATCH] Unselect error:', unselectError)
+        return NextResponse.json({ error: 'Failed to update existing selection' }, { status: 500 })
+      }
+    }
 
     const { error } = await supabase
       .from('applications')

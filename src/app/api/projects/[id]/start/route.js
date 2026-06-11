@@ -73,6 +73,19 @@ export async function POST(request, { params }) {
       }, { status: 400 })
     }
 
+    // Defensive normalization: keep exactly one selected applicant.
+    const { error: normalizeError } = await adminClient
+      .from('applications')
+      .update({ status: 'rejected' })
+      .eq('project_id', projectId)
+      .eq('status', 'selected')
+      .neq('id', selectedApp.id)
+
+    if (normalizeError) {
+      console.error('[projects/start POST] Selection normalize error:', normalizeError)
+      return NextResponse.json({ error: 'Failed to normalize selected applicant' }, { status: 500 })
+    }
+
     // 3. Atomic update: transition project status and escrow
     const { error: updateError } = await adminClient
       .from('projects')

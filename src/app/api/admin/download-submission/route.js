@@ -7,7 +7,8 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const BUCKET = 'skill-submissions'
+const PRIMARY_BUCKET = 'module-submissions'
+const LEGACY_BUCKET = 'skill-submissions'
 const EXPIRY_SECONDS = 60
 
 export async function GET(request) {
@@ -29,9 +30,18 @@ export async function GET(request) {
     }
 
     // 4. Generate a short-lived signed download URL
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
+    let { data, error } = await supabase.storage
+      .from(PRIMARY_BUCKET)
       .createSignedUrl(path, EXPIRY_SECONDS)
+
+    // Backward compatibility for pre-learning-module submissions.
+    if (error) {
+      const fallback = await supabase.storage
+        .from(LEGACY_BUCKET)
+        .createSignedUrl(path, EXPIRY_SECONDS)
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       console.error('[download-submission] Storage error:', error)

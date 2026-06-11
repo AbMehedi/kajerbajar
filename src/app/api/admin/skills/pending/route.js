@@ -1,6 +1,7 @@
 // src/app/api/admin/skills/pending/route.js
 // GET /api/admin/skills/pending
-// Returns all submitted skill verifications awaiting admin review
+// Legacy compatibility endpoint.
+// Mirrors the learning-module review queue so old clients do not read stale tables.
 
 import { requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
@@ -18,25 +19,50 @@ export async function GET() {
     const { supabase } = auth
 
     const { data: submissions, error } = await supabase
-      .from('skill_verifications')
+      .from('module_submissions')
       .select(`
         id,
-        skill_category,
         status,
         ai_brief,
-        submission_text,
+        submission_description,
+        submission_file_url,
         submitted_at,
         created_at,
         student_id,
-        users_profiles!skill_verifications_student_id_fkey (full_name, email),
-        student_profiles!skill_verifications_student_id_fkey (username, university)
+        learning_modules (skill_category),
+        users_profiles:student_id (
+          full_name,
+          email,
+          student_profiles (
+            username,
+            university
+          )
+        )
       `)
-      .eq('status', 'submitted')
+      .eq('status', 'pending')
+      .not('submitted_at', 'is', null)
       .order('submitted_at', { ascending: true })
 
     if (error) throw error
 
-    return NextResponse.json({ submissions }, { status: 200 })
+    const normalized = (submissions ?? []).map((sub) => ({
+      id: sub.id,
+      skill_category: sub.learning_modules?.skill_category ?? null,
+      status: sub.status,
+      ai_brief: sub.ai_brief,
+      submission_text: sub.submission_description ?? null,
+      submission_file_url: sub.submission_file_url ?? null,
+      submitted_at: sub.submitted_at,
+      created_at: sub.created_at,
+      student_id: sub.student_id,
+      users_profiles: sub.users_profiles ?? null,
+      student_profiles: sub.users_profiles?.student_profiles ?? null,
+    }))
+
+    return NextResponse.json(
+      { submissions: normalized, deprecated: true, replacement: '/api/admin/learning/queue' },
+      { status: 200 }
+    )
   } catch (err) {
     console.error('[admin/skills/pending]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -15,16 +15,17 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
 
-    // Badges only represent approved skills; return empty for other statuses.
+    // Backward compatibility for old callers that pass status=approved.
+    // Marketplace badges are not tied to skill_verifications statuses.
     if (status && status !== 'approved') {
       return NextResponse.json({ badges: [] })
     }
 
     const { data: badges, error } = await supabase
-      .from('badges')
-      .select('id, skill_name, verification_id, granted_at, granted_by')
+      .from('student_badges')
+      .select('id, badge_type, is_active, awarded_at, revoked_at, revoke_reason')
       .eq('student_id', user.id)
-      .order('granted_at', { ascending: false })
+      .order('awarded_at', { ascending: false })
 
     if (error) {
       console.error('[student/badges GET] DB error:', error)

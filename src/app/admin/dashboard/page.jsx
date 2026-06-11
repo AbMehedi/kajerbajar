@@ -37,7 +37,11 @@ export default async function AdminDashboard() {
   ] = await Promise.all([
     supabase.from("student_profiles").select("*", { count: "exact", head: true }),
     supabase.from("company_profiles").select("*", { count: "exact", head: true }),
-    supabase.from("skill_verifications").select("*", { count: "exact", head: true }).eq("status", "submitted"),
+    supabase
+      .from("module_submissions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+      .not("submitted_at", "is", null),
     supabase.from("company_profiles").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
   ]);
 
@@ -80,7 +84,7 @@ export default async function AdminDashboard() {
               <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
             </Link>
             <Link
-              href="/admin/skill-test-queue"
+              href="/admin/learning/queue"
               className="glass rounded-xl p-5 flex items-center justify-between border border-white/10 hover:border-amber-500/40 transition-colors group"
             >
               <div>

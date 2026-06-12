@@ -113,7 +113,7 @@ export default async function StudentPublicProfilePage({ params }) {
   const BADGE_LABELS = {
     rising_talent:   { label: '🌟 Rising Star',   color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
     top_rated:       { label: '⭐ Top Rated',      color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
-    top_rated_plus:  { label: '🏆 Elite',         color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+    top_rated_plus:  { label: '🏆 Top Rated Plus', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
   }
   const activeBadge = studentBadge ?? null
 

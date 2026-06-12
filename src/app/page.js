@@ -191,7 +191,7 @@ const BADGE_TIERS = [
     ],
   },
   {
-    name: 'Elite',
+    name: 'Top Rated Plus',
     icon: Crown,
     gradient: 'from-amber-400 to-orange-500',
     border: 'border-amber-500/30',
@@ -205,7 +205,7 @@ const BADGE_TIERS = [
       '95%+ on-time delivery rate',
     ],
     benefits: [
-      'Elite VIP Profile Badge',
+      'Top Rated Plus VIP Profile Badge',
       'Dedicated Account Manager',
       '0% platform fee on repeat clients',
       'Early access to enterprise features & beta',
@@ -416,7 +416,7 @@ export default function Home() {
             <FeatureCard
               icon={Award}
               title="Reputation & Badges"
-              desc="Rising Star → Top Rated → Elite. Unlock lower fees, priority matching, and premium perks as you grow."
+              desc="Rising Star → Top Rated → Top Rated Plus. Unlock lower fees, priority matching, and premium perks as you grow."
               color="rose"
             />
             <FeatureCard
@@ -652,7 +652,7 @@ export default function Home() {
                   'Verify skills through AI-powered learning modules',
                   'Build a portfolio with real micro-projects from companies',
                   'Earn money safely with escrow-protected payments',
-                  'Climb the reputation ladder: Rising Star → Top Rated → Elite',
+                  'Climb the reputation ladder: Rising Star → Top Rated → Top Rated Plus',
                   'Track earnings, reviews, and KaajerScore on your dashboard',
                   'Get downloadable completion certificates for each project',
                 ].map((item, i) => (
@@ -721,8 +721,8 @@ export default function Home() {
               a="When a company accepts your application, they deposit the project budget into escrow. The money is locked and visible to both parties. Once you deliver and the company approves, funds are released to your wallet."
             />
             <FAQItem
-              q="How do I unlock the Elite badge?"
-              a="You need at least 10 verified skills, a 4.9+ client rating, and 30+ completed projects. Elite members enjoy 0% platform fee on repeat clients, a dedicated account manager, and early access to enterprise features."
+              q="How do I unlock the Top Rated Plus badge?"
+              a="You need a 4.9+ client rating and total earnings of at least ৳500,000. Top Rated Plus members enjoy 0% platform fee on repeat clients, a dedicated account manager, and early access to enterprise features."
             />
             <FAQItem
               q="Can companies post projects for free?"

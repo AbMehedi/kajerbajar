@@ -74,7 +74,7 @@ export async function evaluateStudentBadge(studentId) {
         const BADGE_LABELS = {
           rising_talent: '🌟 Rising Star',
           top_rated: '⭐ Top Rated',
-          top_rated_plus: '🏆 Elite',
+          top_rated_plus: '🏆 Top Rated Plus',
         }
         const badgeName = BADGE_LABELS[targetBadge] || targetBadge
 

@@ -125,7 +125,7 @@ export default async function StudentDashboard() {
     expert:  'bg-purple-500/15 text-purple-300 border-purple-500/30',
   }
   const BADGE_LABELS = {
-    rising_talent:   { label: '🌟 Rising Talent',   color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+    rising_talent:   { label: '🌟 Rising Star',    color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
     top_rated:       { label: '⭐ Top Rated',        color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
     top_rated_plus:  { label: '🏆 Top Rated Plus',  color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
   }

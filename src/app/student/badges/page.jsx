@@ -51,8 +51,8 @@ const TIERS = [
     ]
   },
   {
-    id: 'elite',
-    name: 'Elite',
+    id: 'top-rated-plus',
+    name: 'Top Rated Plus',
     icon: Crown,
     color: 'from-amber-400 to-orange-500',
     border: 'border-amber-500/30',
@@ -65,7 +65,7 @@ const TIERS = [
       '95%+ on-time delivery rate'
     ],
     benefits: [
-      'Elite VIP Profile Badge',
+      'Top Rated Plus VIP Profile Badge',
       'Dedicated Account Manager',
       '0% platform fee on repeat clients',
       'Early access to enterprise features & beta programs'
@@ -97,7 +97,7 @@ export default async function BadgesPage() {
   const badgeMap = {
     'rising_talent': 'rising-star',
     'top_rated': 'top-rated',
-    'top_rated_plus': 'elite'
+    'top_rated_plus': 'top-rated-plus'
   }
   const currentTier = userBadge?.badge_type ? badgeMap[userBadge.badge_type] : 'none'
 
@@ -141,7 +141,7 @@ export default async function BadgesPage() {
           <div className="text-right">
             <p className="text-sm text-slate-400 mb-1">Next Goal</p>
             <p className="text-sm font-medium text-white">
-              {currentTier === 'none' ? 'Rising Star' : currentTier === 'rising-star' ? 'Top Rated' : currentTier === 'top-rated' ? 'Elite' : 'Max Rank Reached!'}
+              {currentTier === 'none' ? 'Rising Star' : currentTier === 'rising-star' ? 'Top Rated' : currentTier === 'top-rated' ? 'Top Rated Plus' : 'Max Rank Reached!'}
             </p>
           </div>
         </div>

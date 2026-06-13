@@ -10,6 +10,7 @@
 
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server'
+import { notifyAllAdmins } from '@/lib/server-notifications'
 
 export async function POST(request, { params }) {
   const supabase = await createServerSupabaseClient()
@@ -130,6 +131,32 @@ export async function POST(request, { params }) {
     console.error('[submit module] DB update error:', updateError)
     return NextResponse.json({ error: 'Failed to save submission.' }, { status: 500 })
   }
+
+  // ── Notify all admins about the new submission ──
+  const { data: studentProfile } = await adminClient
+    .from('users_profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .single()
+
+  const { data: moduleInfo } = await adminClient
+    .from('learning_modules')
+    .select('skill_name, difficulty_level')
+    .eq('id', moduleId)
+    .single()
+
+  const studentName = studentProfile?.full_name || 'A student'
+  const skillLabel = moduleInfo
+    ? `${moduleInfo.skill_name} (${moduleInfo.difficulty_level})`
+    : 'a skill module'
+
+  notifyAllAdmins({
+    type:     'admin_skill_submission',
+    title:    `📝 New Skill Submission: ${skillLabel}`,
+    body:     `${studentName} submitted work for ${skillLabel}. Review it in the Skill Test Queue.`,
+    data:     { link: '/admin/learning/queue' },
+    priority: 'important',
+  })
 
   return NextResponse.json({
     message:    'Submission received! Awaiting admin review.',

@@ -9,6 +9,7 @@
 
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
+import { notifyAllAdmins } from '@/lib/server-notifications'
 
 export async function POST(request) {
   const auth = await requireAuthAndRole({
@@ -73,7 +74,20 @@ export async function POST(request) {
   }
   
   // ═══════════════════════════════════════════════════════════════════
-  // Step 5: Return success response
+  // Step 5: Notify all admins about the new trade license submission
+  // ═══════════════════════════════════════════════════════════════════
+  const companyName = updatedProfile?.legal_name || 'A company'
+
+  notifyAllAdmins({
+    type:     'admin_company_verification',
+    title:    `🏢 New Trade License: ${companyName}`,
+    body:     `${companyName} submitted a trade license for verification. Review it in the Company Queue.`,
+    data:     { link: '/admin/company-queue' },
+    priority: 'important',
+  })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Step 6: Return success response
   // ═══════════════════════════════════════════════════════════════════
   return NextResponse.json({
     success: true,

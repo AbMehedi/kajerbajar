@@ -164,3 +164,38 @@ export async function notifyUser({ userId, type, title, body = '', data = {}, pr
     sendEmail: shouldSendEmail,
   })
 }
+
+/**
+ * Sends a notification to ALL admin users.
+ * Useful for alerting admins about new submissions, registrations, etc.
+ *
+ * @param {Object} params — same shape as notifyUser, minus userId
+ * @param {string} params.type
+ * @param {string} params.title
+ * @param {string} [params.body]
+ * @param {Object} [params.data]
+ * @param {'low'|'normal'|'important'} [params.priority]
+ * @param {boolean} [params.sendEmail]
+ */
+export async function notifyAllAdmins({ type, title, body = '', data = {}, priority = 'normal', sendEmail }) {
+  try {
+    const adminSupabase = createServiceRoleClient()
+    const { data: admins, error } = await adminSupabase
+      .from('users_profiles')
+      .select('id')
+      .eq('role', 'admin')
+
+    if (error || !admins?.length) {
+      console.error('[notifyAllAdmins] Failed to fetch admin users:', error)
+      return
+    }
+
+    await Promise.allSettled(
+      admins.map(admin =>
+        notifyUser({ userId: admin.id, type, title, body, data, priority, sendEmail })
+      )
+    )
+  } catch (err) {
+    console.error('[notifyAllAdmins] Exception:', err)
+  }
+}

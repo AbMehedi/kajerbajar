@@ -8,6 +8,7 @@
 import { parseJsonBody, requireAuthAndRole } from '@/lib/api'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase-server'
+import { notifyUser } from '@/lib/server-notifications'
 
 export async function POST(request) {
   const auth = await requireAuthAndRole({
@@ -107,6 +108,27 @@ export async function POST(request) {
       { error: 'Failed to update company status. Please try again.' },
       { status: 500 }
     )
+  }
+
+  // ── Notify the company about the decision ──
+  if (action === 'approve') {
+    await notifyUser({
+      userId: company_id,
+      type: 'company_verified',
+      title: '🎉 Trade License Verified!',
+      body: 'Your trade license has been approved. You are now a verified company and can start posting projects.',
+      data: { link: '/company/dashboard' },
+      priority: 'important',
+    })
+  } else if (action === 'reject') {
+    await notifyUser({
+      userId: company_id,
+      type: 'company_verification_failed',
+      title: '⚠️ Trade License Rejected',
+      body: `Your trade license verification failed. Admin feedback: "${feedback.trim()}". Please review and re-upload.`,
+      data: { link: '/company/profile/edit' },
+      priority: 'important',
+    })
   }
   
   // ═══════════════════════════════════════════════════════════════════

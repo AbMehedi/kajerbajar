@@ -38,16 +38,16 @@ function VerificationProgressBar({ status }) {
       <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-4">
         Verification Progress
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         {steps.map((step, idx) => {
-          const done    = idx < stepIndex
-          const active  = idx === stepIndex && status !== 'rejected'
-          const isLast  = idx === steps.length - 1
+          const done   = idx < stepIndex
+          const active = idx === stepIndex && status !== 'rejected'
+          const isLast = idx === steps.length - 1
 
           return (
-            <div key={step.key} className="flex items-center flex-1 min-w-0">
-              {/* Step pill */}
-              <div className="flex flex-col items-center flex-shrink-0">
+            <>
+              {/* Step pill — flex-1 so each circle gets equal space */}
+              <div key={step.key} className="flex flex-col items-center flex-1">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
                     done   ? 'bg-green-500/20 border-green-500 text-green-400'
@@ -64,13 +64,13 @@ function VerificationProgressBar({ status }) {
                 </p>
               </div>
 
-              {/* Connector line */}
+              {/* Connector line — flex-1 between the circles */}
               {!isLast && (
-                <div className={`flex-1 h-0.5 mx-1 mb-3 rounded-full transition-colors ${
+                <div className={`flex-1 h-0.5 mb-3 rounded-full transition-colors ${
                   done ? 'bg-green-500/40' : 'bg-white/10'
                 }`} />
               )}
-            </div>
+            </>
           )
         })}
       </div>

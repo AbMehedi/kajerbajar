@@ -172,6 +172,25 @@
     scroll-behavior: smooth;
     /* Prevent layout shift from scrollbar appearing */
     scrollbar-gutter: stable;
+    /* Themed scrollbar — matches Applications panel purple accent */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(270 70% 55% / 0.30) transparent; /* Firefox */
+  }
+
+  /* WebKit global scrollbar (Chrome, Safari, Edge) */
+  html::-webkit-scrollbar {
+    width: 6px;
+  }
+  html::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  html::-webkit-scrollbar-thumb {
+    background: hsl(270 70% 55% / 0.28);
+    border-radius: 99px;
+    transition: background 0.2s ease;
+  }
+  html::-webkit-scrollbar-thumb:hover {
+    background: hsl(270 70% 62% / 0.55);
   }
 
   body {

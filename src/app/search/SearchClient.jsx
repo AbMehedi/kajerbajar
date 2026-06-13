@@ -1,25 +1,134 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Star, Building2, User, GraduationCap, MapPin } from 'lucide-react'
+import { Search, Star, Building2, User, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react'
 
+const PAGE_SIZE = 9
+
+// ── Pagination bar ─────────────────────────────────────────────────────────────
+function Pagination({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null
+
+  // Build page number list: always show first, last, current ±1, with ellipsis
+  const pages = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (
+      i === 1 ||
+      i === totalPages ||
+      (i >= currentPage - 1 && i <= currentPage + 1)
+    ) {
+      pages.push(i)
+    } else if (
+      (i === 2 && currentPage > 3) ||
+      (i === totalPages - 1 && currentPage < totalPages - 2)
+    ) {
+      pages.push('…')
+    }
+  }
+  // Deduplicate consecutive ellipsis
+  const deduped = pages.filter((p, i) => !(p === '…' && pages[i - 1] === '…'))
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 pt-6">
+      {/* Previous */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-white hover:border-purple-500/40 hover:bg-purple-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+
+      {/* Page numbers */}
+      {deduped.map((p, i) =>
+        p === '…' ? (
+          <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-slate-600 text-sm select-none">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold border transition-all ${
+              p === currentPage
+                ? 'bg-purple-600 border-purple-500 text-white shadow shadow-purple-900/30'
+                : 'border-white/10 text-slate-400 hover:text-white hover:border-purple-500/40 hover:bg-purple-500/10'
+            }`}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      {/* Next */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-white hover:border-purple-500/40 hover:bg-purple-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Next page"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 export default function SearchClient({ initialStudents, initialCompanies }) {
   const [activeTab, setActiveTab] = useState('students')
   const [searchQuery, setSearchQuery] = useState('')
+  const [studentPage, setStudentPage] = useState(1)
+  const [companyPage, setCompanyPage] = useState(1)
 
-  const filteredStudents = initialStudents.filter(s => 
-    s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.university?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.bio?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Reset to page 1 when search changes
+  function handleSearch(e) {
+    setSearchQuery(e.target.value)
+    setStudentPage(1)
+    setCompanyPage(1)
+  }
+
+  // Reset to page 1 when tab changes
+  function handleTab(tab) {
+    setActiveTab(tab)
+    setStudentPage(1)
+    setCompanyPage(1)
+  }
+
+  const filteredStudents = useMemo(() =>
+    initialStudents.filter(s =>
+      s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.university?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.bio?.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [initialStudents, searchQuery])
+
+  const filteredCompanies = useMemo(() =>
+    initialCompanies.filter(c =>
+      c.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.industry?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [initialCompanies, searchQuery])
+
+  // Paginate
+  const studentTotalPages = Math.max(1, Math.ceil(filteredStudents.length / PAGE_SIZE))
+  const companyTotalPages = Math.max(1, Math.ceil(filteredCompanies.length / PAGE_SIZE))
+
+  const pagedStudents = filteredStudents.slice(
+    (studentPage - 1) * PAGE_SIZE,
+    studentPage * PAGE_SIZE
+  )
+  const pagedCompanies = filteredCompanies.slice(
+    (companyPage - 1) * PAGE_SIZE,
+    companyPage * PAGE_SIZE
   )
 
-  const filteredCompanies = initialCompanies.filter(c => 
-    c.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.industry?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const currentList  = activeTab === 'students' ? pagedStudents   : pagedCompanies
+  const totalPages   = activeTab === 'students' ? studentTotalPages : companyTotalPages
+  const currentPage  = activeTab === 'students' ? studentPage      : companyPage
+  const setPage      = activeTab === 'students' ? setStudentPage   : setCompanyPage
+  const totalResults = activeTab === 'students' ? filteredStudents.length : filteredCompanies.length
 
   return (
     <div className="space-y-6">
@@ -32,15 +141,23 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           type="text"
           placeholder={`Search ${activeTab}...`}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearch}
           className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white focus:outline-none focus:border-purple-500/50 transition-colors placeholder:text-slate-500 shadow-inner"
         />
+        {/* Result count — shown inside search bar row on the right */}
+        {totalResults > 0 && (
+          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+            <span className="text-slate-500 text-xs">
+              {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, totalResults)} of {totalResults}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — unchanged original style */}
       <div className="flex p-1 bg-white/5 rounded-xl max-w-sm border border-white/10">
         <button
-          onClick={() => setActiveTab('students')}
+          onClick={() => handleTab('students')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${
             activeTab === 'students' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-white/5'
           }`}
@@ -48,7 +165,7 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           <User className="w-4 h-4" /> Students
         </button>
         <button
-          onClick={() => setActiveTab('companies')}
+          onClick={() => handleTab('companies')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${
             activeTab === 'companies' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-white/5'
           }`}
@@ -57,21 +174,17 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
         </button>
       </div>
 
-      {/* Results */}
+      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {activeTab === 'students' && filteredStudents.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500">
-            No students found matching your search.
-          </div>
-        )}
-        
-        {activeTab === 'companies' && filteredCompanies.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500">
-            No companies found matching your search.
+        {currentList.length === 0 && (
+          <div className="col-span-full py-16 text-center">
+            <p className="text-slate-500 text-sm">
+              No {activeTab} found{searchQuery ? ` matching "${searchQuery}"` : ''}.
+            </p>
           </div>
         )}
 
-        {activeTab === 'students' && filteredStudents.map(student => (
+        {activeTab === 'students' && pagedStudents.map(student => (
           <Link href={`/profile/student/${student.id}`} key={student.id} className="group">
             <div className="h-full glass border border-white/10 rounded-2xl p-5 hover:border-purple-500/40 transition-all hover:bg-white/5">
               <div className="flex items-start justify-between mb-4">
@@ -109,7 +222,7 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           </Link>
         ))}
 
-        {activeTab === 'companies' && filteredCompanies.map(company => (
+        {activeTab === 'companies' && pagedCompanies.map(company => (
           <Link href={`/profile/company/${company.id}`} key={company.id} className="group">
             <div className="h-full glass border border-white/10 rounded-2xl p-5 hover:border-purple-500/40 transition-all hover:bg-white/5 flex flex-col">
               <div className="flex items-start justify-between mb-4">
@@ -149,6 +262,14 @@ export default function SearchClient({ initialStudents, initialCompanies }) {
           </Link>
         ))}
       </div>
+
+      {/* Pagination bar */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   )
 }
+

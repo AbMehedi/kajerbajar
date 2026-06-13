@@ -594,7 +594,7 @@ export default function ApplicationsPanel() {
 
       <div className="flex h-[620px]">
         {/* Left: Project list */}
-        <div className="w-56 border-r border-white/8 flex-shrink-0 bg-white/[0.01] overflow-y-auto">
+        <div className="w-56 border-r border-white/8 flex-shrink-0 bg-white/[0.01] overflow-y-auto scrollbar-themed">
           <ul className="py-2">
             {projects.map((p) => {
               const isActive = selectedProject?.id === p.id
@@ -647,7 +647,7 @@ export default function ApplicationsPanel() {
                 </div>
               </div>
               {/* Scrollable applicant list only */}
-              <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="flex-1 overflow-y-auto scrollbar-themed px-5 py-4">
                 <ApplicantList
                   key={selectedProject.id}
                   projectId={selectedProject.id}

@@ -560,3 +560,44 @@
 :root:not(.dark) .dark.border-white\/15 {
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
+
+/* ── 7. Themed Scrollbar ── */
+/*
+ * .scrollbar-themed — slim purple scrollbar matched to the Applications panel accent.
+ * Used on overflow-y-auto containers inside ApplicationsPanel.
+ */
+@layer utilities {
+  .scrollbar-themed {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(270 70% 55% / 0.30) transparent; /* Firefox */
+  }
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 5px;
+  }
+  .scrollbar-themed::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background: hsl(270 70% 55% / 0.28);
+    border-radius: 99px;
+    transition: background 0.2s ease;
+  }
+  .scrollbar-themed::-webkit-scrollbar-thumb:hover {
+    background: hsl(270 70% 62% / 0.55);
+  }
+
+  /* ── Fade-in row animation (used by ProjectsTable "See all" reveal) ── */
+  @keyframes fadeInRow {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fadeInRow {
+    animation: fadeInRow 0.25s ease forwards;
+  }
+}

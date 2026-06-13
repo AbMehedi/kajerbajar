@@ -5,11 +5,12 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import TradeLicenseUpload from './TradeLicenseUpload'
 import ApplicationsPanel from './ApplicationsPanel'
+import ProjectsTable from './ProjectsTable'
 import DashboardShell from '@/components/layout/DashboardShell'
 import EmptyState from '@/components/ui/EmptyState'
 import StatCard from '@/components/ui/StatCard'
 import Link from 'next/link'
-import { CheckCircle, Circle, Clock, PlusCircle, Star, Briefcase, FileText, Building2, ShieldCheck } from 'lucide-react'
+import { CheckCircle, Clock, PlusCircle, Star, Briefcase, FileText, Building2, ShieldCheck } from 'lucide-react'
 
 export const metadata = {
   title: 'Company Dashboard — KaajerBazar',
@@ -256,67 +257,7 @@ export default async function CompanyDashboard() {
               actionHref={isVerified ? '/company/projects/new' : undefined}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-slate-500 text-xs border-b border-white/8">
-                    <th className="text-left pb-2 font-medium">Title</th>
-                    <th className="text-left pb-2 font-medium hidden sm:table-cell">Deadline</th>
-                    <th className="text-right pb-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.map((project) => {
-                    const deadline = project.deadline
-                      ? new Date(project.deadline).toLocaleDateString('en-GB', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                        })
-                      : null
-
-                    const daysLeft = project.deadline
-                      ? Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24))
-                      : null
-
-                    return (
-                      <tr key={project.id} className="border-b border-white/5 last:border-0">
-                        <td className="py-2.5 pr-4">
-                          <p className="text-slate-200 font-medium truncate max-w-[200px]">{project.title}</p>
-                        </td>
-                        <td className="py-2.5 pr-4 hidden sm:table-cell">
-                          {deadline ? (
-                            <div>
-                              <p className="text-slate-400 text-xs">{deadline}</p>
-                              {daysLeft !== null && daysLeft >= 0 && (
-                                <p className={`text-xs mt-0.5 flex items-center gap-1 ${daysLeft <= 3 ? 'text-red-400' : 'text-slate-600'}`}>
-                                  <Clock className="w-3 h-3" />
-                                  {daysLeft === 0 ? 'Due today' : `${daysLeft}d left`}
-                                </p>
-                              )}
-                              {daysLeft !== null && daysLeft < 0 && (
-                                <p className="text-xs mt-0.5 text-slate-600">Expired</p>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-600 text-xs">No deadline</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 text-right">
-                          <span className={
-                            project.status === 'open'
-                              ? 'badge-success'
-                              : project.status === 'closed'
-                                ? 'badge-error'
-                                : 'badge-warning'
-                          }>
-                            {project.status ?? 'open'}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ProjectsTable projects={projects} />
           )}
         </div>
 

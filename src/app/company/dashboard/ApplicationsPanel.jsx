@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, ChevronDown, Check, X, Clock, CheckCircle2, Users } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +38,7 @@ function ProjectStatusBadge({ status }) {
     open:       { cls: 'bg-green-500/15  text-green-400  border-green-500/30',  label: 'Open' },
     closed:     { cls: 'bg-red-500/15    text-red-400    border-red-500/30',    label: 'Closed' },
     in_progress:{ cls: 'bg-blue-500/15   text-blue-400   border-blue-500/30',   label: 'In Progress' },
+    completed:  { cls: 'bg-slate-500/15  text-slate-400  border-slate-500/30',  label: 'Completed' },
   }
   const { cls, label } = map[status] ?? { cls: 'bg-slate-500/15 text-slate-400 border-slate-500/30', label: status ?? 'open' }
   return (
@@ -80,19 +81,21 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
   const isResolved = app.status !== 'pending'
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-colors ${
-      isResolved ? 'border-white/5 bg-white/2' : 'border-white/10 bg-white/5'
+    <div className={`rounded-2xl border overflow-hidden transition-all duration-200 ${
+      isResolved
+        ? 'border-white/5 bg-white/2'
+        : 'border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]'
     }`}>
       {/* Card header */}
       <div
-        className="flex items-start justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors gap-3"
+        className="flex items-start justify-between p-4 cursor-pointer transition-colors gap-3"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex items-start gap-4">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={name} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10" />
+            <img src={avatarUrl} alt={name} className="w-12 h-12 rounded-2xl object-cover shrink-0 border border-white/10" />
           ) : (
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold shrink-0 border border-purple-500/30">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold shrink-0 border border-purple-500/30">
               {name.charAt(0)}
             </div>
           )}
@@ -141,20 +144,23 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
           </div>
         </div>
 
-        {/* Expand toggle */}
-        <span className="text-slate-600 text-xs shrink-0 mt-1">{expanded ? '▲' : '▼'}</span>
+        {/* Expand toggle — rotating chevron */}
+        <ChevronDown
+          className={`w-4 h-4 text-slate-500 shrink-0 mt-1 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+        />
       </div>
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="border-t border-white/10 p-4 space-y-4">
+        <div className="border-t border-white/8 px-4 pb-4 pt-4 space-y-4">
           {/* Cover letter */}
           {app.cover_note ? (
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                📝 Cover Letter
+              <p className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+                <span className="w-4 h-4 rounded bg-white/8 flex items-center justify-center text-[10px]">📝</span>
+                Cover Letter
               </p>
-              <div className="bg-white/5 rounded-lg p-3 text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="bg-white/5 rounded-xl p-3 text-slate-300 text-sm leading-relaxed whitespace-pre-wrap border border-white/8">
                 {app.cover_note}
               </div>
             </div>
@@ -165,8 +171,9 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
           {/* Portfolio link */}
           {app.portfolio_item_url && (
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                🔗 Portfolio / Work Sample
+              <p className="text-xs font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
+                <span className="w-4 h-4 rounded bg-white/8 flex items-center justify-center text-[10px]">🔗</span>
+                Portfolio / Work Sample
               </p>
               <a
                 href={app.portfolio_item_url}
@@ -179,8 +186,6 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
             </div>
           )}
 
-
-
           {/* Applied date */}
           <p className="text-slate-600 text-xs">
             Applied {new Date(app.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -188,28 +193,40 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
 
           {/* Action buttons — only shown if still pending */}
           {!isResolved && (
-            <div className="flex gap-2 flex-wrap">
-              <button
-                id={`accept-${app.id}`}
-                onClick={(e) => { e.stopPropagation(); onAction(app.id, 'select') }}
-                disabled={isLoading}
-                className="flex-1 min-w-24 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
-                    Updating…
-                  </span>
-                ) : '✅ Accept'}
-              </button>
-              <button
-                id={`reject-${app.id}`}
-                onClick={(e) => { e.stopPropagation(); onAction(app.id, 'reject') }}
-                disabled={isLoading}
-                className="flex-1 min-w-24 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-              >
-                {isLoading ? '…' : '❌ Reject'}
-              </button>
+            <div className="pt-2 border-t border-white/8">
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  id={`accept-${app.id}`}
+                  onClick={(e) => { e.stopPropagation(); onAction(app.id, 'select') }}
+                  disabled={isLoading}
+                  className="inline-flex items-center justify-center gap-1.5 flex-1 min-w-24 max-w-[180px] bg-green-500/15 hover:bg-green-500/25 disabled:opacity-50 text-green-300 text-sm font-medium py-2 px-4 rounded-full border border-green-500/35 transition-all duration-150"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-3 h-3 border border-green-400/40 border-t-green-300 rounded-full animate-spin" />
+                      Updating…
+                    </span>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Accept
+                    </>
+                  )}
+                </button>
+                <button
+                  id={`reject-${app.id}`}
+                  onClick={(e) => { e.stopPropagation(); onAction(app.id, 'reject') }}
+                  disabled={isLoading}
+                  className="inline-flex items-center justify-center gap-1.5 flex-1 min-w-24 max-w-[180px] bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 text-red-300 text-sm font-medium py-2 px-4 rounded-full border border-red-500/30 transition-all duration-150"
+                >
+                  {isLoading ? '…' : (
+                    <>
+                      <X className="w-3.5 h-3.5" />
+                      Reject
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
@@ -242,6 +259,19 @@ function ApplicantCard({ app, rank, onAction, actionLoading, canStart, onStartPr
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Section Divider Header ─────────────────────────────────────────────────────
+function SectionDivider({ icon: Icon, label, color = 'text-slate-400' }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`flex items-center gap-1.5 shrink-0 ${color}`}>
+        <Icon className="w-3.5 h-3.5" />
+        <span className="text-xs font-semibold">{label}</span>
+      </div>
+      <div className="flex-1 h-px bg-white/8" />
     </div>
   )
 }
@@ -321,9 +351,9 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-10 gap-2 text-slate-500">
-        <span className="w-4 h-4 border-2 border-slate-600 border-t-purple-400 rounded-full animate-spin" />
-        Loading applicants…
+      <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500">
+        <span className="w-8 h-8 border-2 border-slate-700 border-t-purple-400 rounded-full animate-spin" />
+        <span className="text-sm">Loading applicants…</span>
       </div>
     )
   }
@@ -338,10 +368,16 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
 
   if (applications.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-3xl mb-3">📭</p>
-        <p className="text-slate-400 text-sm">No one has applied to <strong className="text-white">{projectTitle}</strong> yet.</p>
-        <p className="text-slate-600 text-xs mt-1">Share the project link to attract more students.</p>
+      <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-2xl">
+          📭
+        </div>
+        <div>
+          <p className="text-slate-300 text-sm font-medium">No applicants yet</p>
+          <p className="text-slate-500 text-xs mt-1">
+            Share the project link to attract students.
+          </p>
+        </div>
       </div>
     )
   }
@@ -367,13 +403,19 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
     <div className="space-y-5">
       {/* Header row: summary + sort + workspace */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-4 text-xs text-slate-500">
-          <span>{applications.length} total applicant{applications.length !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1">
+            <Users className="w-3.5 h-3.5" />
+            {applications.length} applicant{applications.length !== 1 ? 's' : ''}
+          </span>
           {pending.length > 0 && (
-            <span className="text-yellow-400 font-semibold">{pending.length} awaiting review</span>
+            <span className="inline-flex items-center gap-1 text-yellow-400 font-semibold bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded-full">
+              <Clock className="w-3 h-3" />
+              {pending.length} awaiting review
+            </span>
           )}
           {resolved.length > 0 && (
-            <span>{resolved.length} reviewed</span>
+            <span className="text-slate-600">{resolved.length} reviewed</span>
           )}
         </div>
 
@@ -406,8 +448,10 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
 
       {/* KaajerScore Ranking Banner */}
       {sortKey === 'kaajerscore' && pending.length > 0 && (
-        <div className="flex items-start gap-3 bg-purple-500/10 border border-purple-500/25 rounded-xl px-4 py-3">
-          <span className="text-lg shrink-0">⭐</span>
+        <div className="flex items-start gap-3 bg-purple-500/10 border border-purple-500/25 border-l-2 border-l-purple-400 rounded-xl px-4 py-3">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+            <span className="text-sm">⭐</span>
+          </div>
           <div>
             <p className="text-purple-300 text-xs font-semibold">Ranked by KaajerScore</p>
             <p className="text-slate-400 text-xs mt-0.5">
@@ -420,9 +464,7 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
       {/* Pending applicants first */}
       {pending.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wide">
-            ⏳ Awaiting Review
-          </p>
+          <SectionDivider icon={Clock} label="Awaiting Review" color="text-yellow-400" />
           {pending.map((app, idx) => (
             <ApplicantCard
               key={app.id}
@@ -438,9 +480,7 @@ function ApplicantList({ projectId, projectTitle, projectStatus, escrowStatus })
       {/* Resolved applicants */}
       {resolved.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            ✅ Reviewed
-          </p>
+          <SectionDivider icon={CheckCircle2} label="Reviewed" color="text-slate-400" />
           {resolved.map((app) => (
             <ApplicantCard
               key={app.id}
@@ -499,8 +539,8 @@ export default function ApplicationsPanel() {
         const data = await res.json()
         if (!res.ok) { setError(data.error || 'Failed to load projects'); return }
         setProjects(data.projects ?? [])
-        // Auto-select first project if only one exists
-        if (data.projects?.length === 1) setSelectedProject(data.projects[0])
+        // Always auto-select the first project on load
+        if (data.projects?.length > 0) setSelectedProject(data.projects[0])
       } catch {
         setError('Network error.')
       } finally {
@@ -512,59 +552,70 @@ export default function ApplicationsPanel() {
 
   if (loading) {
     return (
-      <div className="glass rounded-xl p-6 flex items-center gap-3 text-slate-500 text-sm">
-        <span className="w-4 h-4 border-2 border-slate-600 border-t-purple-400 rounded-full animate-spin" />
-        Loading your projects…
+      <div className="glass rounded-2xl p-8 flex flex-col items-center gap-3 text-slate-500 text-sm">
+        <span className="w-8 h-8 border-2 border-slate-700 border-t-purple-400 rounded-full animate-spin" />
+        <span>Loading your projects…</span>
       </div>
     )
   }
 
   if (error) {
-    return <div className="glass rounded-xl p-6 text-red-400 text-sm">{error}</div>
+    return <div className="glass rounded-2xl p-6 text-red-400 text-sm">{error}</div>
   }
 
   if (projects.length === 0) {
     return (
-      <div className="glass rounded-xl p-8 text-center">
-        <p className="text-3xl mb-3">📋</p>
-        <p className="text-slate-400 text-sm">You haven&apos;t posted any projects yet.</p>
-        <p className="text-slate-600 text-xs mt-1">Post a project to start receiving student applications.</p>
+      <div className="glass rounded-2xl p-10 flex flex-col items-center text-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-3xl">
+          📋
+        </div>
+        <div>
+          <p className="text-slate-300 text-sm font-medium">No projects yet</p>
+          <p className="text-slate-600 text-xs mt-1">Post a project to start receiving student applications.</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="glass rounded-xl overflow-hidden">
+    <div className="glass rounded-2xl overflow-hidden border border-white/8">
       {/* Panel header */}
-      <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <h3 className="text-white font-semibold text-base">👥 Manage Applicants</h3>
-        <span className="text-xs text-slate-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+      <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between bg-white/[0.02]">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 text-purple-300" />
+          </div>
+          <h3 className="text-white font-semibold text-base">Manage Applicants</h3>
+        </div>
+        <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+          {projects.length} project{projects.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
-      <div className="flex min-h-[420px]">
+      <div className="flex h-[620px]">
         {/* Left: Project list */}
-        <div className="w-56 border-r border-white/10 flex-shrink-0">
+        <div className="w-56 border-r border-white/8 flex-shrink-0 bg-white/[0.01] overflow-y-auto">
           <ul className="py-2">
             {projects.map((p) => {
               const isActive = selectedProject?.id === p.id
               return (
-                <li key={p.id}>
+                <li key={p.id} className="border-b border-white/5 last:border-0">
                   <button
                     id={`project-tab-${p.id}`}
                     onClick={() => setSelectedProject(p)}
-                    className={`w-full text-left px-4 py-3 transition-colors hover:bg-white/5 border-l-2 ${
+                    className={`w-full text-left px-4 py-3 transition-all duration-150 border-l-2 group ${
                       isActive
-                        ? 'border-purple-500 bg-purple-500/10'
-                        : 'border-transparent'
+                        ? 'border-purple-400 bg-purple-500/10'
+                        : 'border-transparent hover:bg-white/5 hover:border-white/10'
                     }`}
                   >
-                    <p className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                    <p className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
                       {p.title}
                     </p>
-                    <div className="flex items-center justify-between mt-1 gap-2">
+                    <div className="flex items-center justify-between mt-1.5 gap-2">
                       <ProjectStatusBadge status={p.status} />
                       {p.applicant_count > 0 && (
-                        <span className="text-xs text-purple-400 font-semibold shrink-0">
+                        <span className="text-[10px] text-purple-300 font-bold bg-purple-500/15 border border-purple-500/25 px-1.5 py-0.5 rounded-full shrink-0">
                           {p.applicant_count} applied
                         </span>
                       )}
@@ -577,29 +628,41 @@ export default function ApplicationsPanel() {
         </div>
 
         {/* Right: Applicant list for selected project */}
-        <div className="flex-1 p-5 overflow-y-auto">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {selectedProject ? (
             <>
-              <div className="flex items-center gap-3 mb-5">
-                <h4 className="text-white font-semibold">{selectedProject.title}</h4>
-                <ProjectStatusBadge status={selectedProject.status} />
-                {selectedProject.budget_bdt && (
-                  <span className="text-green-400 text-sm font-semibold">
-                    ৳{Number(selectedProject.budget_bdt).toLocaleString()}
-                  </span>
-                )}
+              {/* Project header — pinned, never scrolls */}
+              <div className="px-5 pt-5 pb-4 border-b border-white/8 shrink-0 bg-white/[0.01]">
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-1.5">
+                  Selected Project
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h4 className="text-white font-semibold">{selectedProject.title}</h4>
+                  <ProjectStatusBadge status={selectedProject.status} />
+                  {selectedProject.budget_bdt && (
+                    <span className="text-emerald-300 text-xs font-semibold bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-full">
+                      ৳{Number(selectedProject.budget_bdt).toLocaleString()}
+                    </span>
+                  )}
+                </div>
               </div>
-              <ApplicantList
-                key={selectedProject.id}
-                projectId={selectedProject.id}
-                projectTitle={selectedProject.title}
-                projectStatus={selectedProject.status}
-                escrowStatus={selectedProject.escrow_status}
-              />
+              {/* Scrollable applicant list only */}
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <ApplicantList
+                  key={selectedProject.id}
+                  projectId={selectedProject.id}
+                  projectTitle={selectedProject.title}
+                  projectStatus={selectedProject.status}
+                  escrowStatus={selectedProject.escrow_status}
+                />
+              </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-600 text-sm">
-              ← Select a project to view applicants
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600">
+              <div className="w-10 h-10 rounded-xl bg-white/4 border border-white/8 flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+              <span className="text-sm">← Select a project to view applicants</span>
             </div>
           )}
         </div>

@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, Star, Briefcase, Download, ShieldCheck } from 'lucide-react'
+import { Search, Star, Briefcase, Download, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
+
+const PREVIEW_COUNT = 3
 
 function StarRating({ rating }) {
   if (!rating) return null
@@ -39,6 +41,7 @@ function ApplicationStatusBadge({ status }) {
 
 export default function ProjectHistoryClient({ applications, reviews, unlockedProjectIds }) {
   const [query, setQuery] = useState('')
+  const [showAll, setShowAll] = useState(false)
 
   const filteredApps = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -87,14 +90,18 @@ export default function ProjectHistoryClient({ applications, reviews, unlockedPr
         </div>
       ) : (
         <div className="space-y-4 mt-2">
-          {filteredApps.map((app) => {
+          {(showAll ? filteredApps : filteredApps.slice(0, PREVIEW_COUNT)).map((app, idx) => {
             const project = app.projects
             const isCompleted = project?.status === 'completed'
             const review = reviews?.find(r => r.project_id === project?.id)
             const isUnlocked = unlockedProjectIds.has(project?.id)
+            const isExtra = idx >= PREVIEW_COUNT
 
             return (
-              <div key={app.id} className="border border-white/10 bg-white/4 rounded-xl p-5 hover:bg-white/5 transition-colors">
+              <div
+                key={app.id}
+                className={`border border-white/10 bg-white/4 rounded-xl p-5 hover:bg-white/5 transition-colors ${isExtra ? 'animate-fadeInRow' : ''}`}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -142,7 +149,7 @@ export default function ProjectHistoryClient({ applications, reviews, unlockedPr
                           </span>
                         )}
                       </div>
-                      
+
                       {review && isUnlocked && (
                         <div className="text-xs text-slate-500 shrink-0 text-right mt-1">
                           {new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -154,6 +161,28 @@ export default function ProjectHistoryClient({ applications, reviews, unlockedPr
               </div>
             )
           })}
+
+          {/* See more / Show less toggle */}
+          {filteredApps.length > PREVIEW_COUNT && (
+            <div className="pt-3 border-t border-white/5 flex items-center justify-center">
+              <button
+                onClick={() => setShowAll((v) => !v)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-purple-300 transition-colors group"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5 transition-transform group-hover:-translate-y-0.5" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    See all {filteredApps.length} projects
+                    <ChevronDown className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
